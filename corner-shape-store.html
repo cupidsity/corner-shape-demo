@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Foolscap Paper Co. — corner-shape demo</title>
+<style>
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --white: #ffffff;
+    --grey: #f3ece0;
+    --grey-2: #e7dcc9;
+    --steel: #9a8f7d;
+    --ink: #17203a;
+    --ink-2: #2c3554;
+    --ink-soft: #6b6759;
+    --line: #ddd2bf;
+    --brand: #e2543c;
+    --brand-dark: #c9432d;
+    --green: #3f9c7c;
+    --orange: #eba32f;
+    --purple: #6f5ad0;
+    --sky: #4d86c4;
+
+    --sans: "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
+    --serif: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    --morph: 420ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  body {
+    font-family: var(--sans);
+    color: var(--ink);
+    background: #fbf8f1;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.47;
+    letter-spacing: -0.01em;
+  }
+
+  a { color: inherit; text-decoration: none; }
+  h1, h2, h3 { font-family: var(--serif); font-weight: 700; letter-spacing: -0.015em; line-height: 1.1; }
+  h2 { font-size: clamp(1.8rem, 3.4vw, 2.6rem); }
+  code { font-family: ui-monospace, "SF Mono", monospace; font-size: 0.94em; }
+  .wrap { width: min(1080px, 100% - 44px); margin-inline: auto; }
+  .eyebrow { font-size: 0.72rem; font-weight: 600; color: var(--orange); }
+
+  .morph,
+  .stage *,
+  .film video {
+    transition:
+      corner-top-left-shape var(--morph),
+      corner-top-right-shape var(--morph),
+      corner-bottom-right-shape var(--morph),
+      corner-bottom-left-shape var(--morph),
+      border-radius var(--morph),
+      transform var(--morph),
+      background-color 200ms ease,
+      color 200ms ease,
+      box-shadow 300ms ease,
+      outline-color 200ms ease,
+      outline-offset 200ms ease,
+      scale 500ms ease-in-out;
+  }
+
+  .stamp { position: relative; width: 96px; height: 96px; --surface: #fbf8f1; }
+  .stamp > * { position: absolute; }
+  .stamp-body {
+    inset: 0;
+    background: var(--ink);
+    border-radius: 22%;
+    corner-shape: notch;
+  }
+  .stamp-punch {
+    left: 26px; top: 26px; width: 44px; height: 44px;
+    background: var(--surface);
+    border-radius: 50%;
+    corner-shape: scoop;
+  }
+  .mark-slot { position: relative; flex: none; }
+  .mark-slot .stamp { position: absolute; left: 0; top: 0; transform-origin: top left; }
+  .mark-nav  { width: 24px; height: 24px; }
+  .mark-nav  .stamp { transform: scale(0.25); --surface: var(--grey); }
+  .mark-hero { width: 132px; height: 132px; }
+  .mark-hero .stamp { transform: scale(1.375); }
+  .mark-foot { width: 26px; height: 26px; }
+  .mark-foot .stamp { transform: scale(0.27); --surface: var(--grey); }
+  .stamp-hover:hover .stamp-body { corner-shape: squircle; }
+  .stamp-hover:hover .stamp-punch { corner-shape: bevel; }
+
+  .wordmark { font-family: var(--serif); font-size: 1.05rem; font-weight: 700; letter-spacing: -0.01em; }
+
+  .globalnav {
+    position: sticky; top: 0; z-index: 40;
+    background: var(--grey);
+    border-bottom: 1px solid var(--line);
+    font-size: 0.76rem;
+  }
+  .globalnav-row { display: flex; align-items: center; gap: 26px; height: 46px; }
+  .brand { display: inline-flex; align-items: center; gap: 9px; }
+  .globalnav .links { display: flex; align-items: center; gap: 23px; margin-inline: auto; }
+  .globalnav .links a { opacity: 0.86; }
+  .globalnav .links a:hover { opacity: 1; }
+  .icons { display: flex; align-items: center; gap: 12px; }
+  .icon-btn {
+    display: grid; place-items: center; width: 28px; height: 28px;
+    background: transparent; border: none; cursor: pointer; color: var(--ink);
+    border-radius: 9px;
+    corner-shape: squircle;
+  }
+  .icon-btn:hover { background: var(--grey-2); corner-shape: bevel; }
+  .bag-wrap { position: relative; }
+  .bag-count {
+    position: absolute; top: -3px; right: -5px;
+    min-width: 16px; height: 16px; display: grid; place-items: center;
+    background: var(--brand); color: #fff;
+    font-size: 0.6rem; font-weight: 700; font-variant-numeric: tabular-nums;
+    border-radius: 50%;
+    corner-shape: superellipse(1.2);
+  }
+  .bag-count.bump { animation: bump 380ms cubic-bezier(0.34, 1.4, 0.5, 1); }
+  @keyframes bump { 0% { transform: scale(1); } 45% { transform: scale(1.4); } 100% { transform: scale(1); } }
+
+  .glyph-search, .glyph-bag { position: relative; width: 15px; height: 15px; }
+  .glyph-search > *, .glyph-bag > * { position: absolute; }
+  .glyph-search .lens {
+    left: 0; top: 0; width: 11px; height: 11px;
+    border: 1.5px solid currentColor;
+    border-radius: 50%;
+    corner-shape: superellipse(1.2);
+  }
+  .glyph-search .handle {
+    left: 8px; top: 8px; width: 6px; height: 1.6px;
+    background: currentColor;
+    border-radius: 1px;
+    corner-shape: bevel;
+    transform: rotate(45deg);
+    transform-origin: left center;
+  }
+  .glyph-bag .body {
+    left: 0; bottom: 0; width: 15px; height: 11px;
+    border: 1.5px solid currentColor;
+    border-radius: 4px;
+    corner-shape: squircle;
+  }
+  .glyph-bag .handle {
+    left: 4px; top: 0; width: 7px; height: 6px;
+    border: 1.5px solid currentColor; border-bottom: none;
+    border-radius: 100% 100% 0 0;
+    corner-shape: superellipse(1.3);
+  }
+  .icon-btn:hover .lens,
+  .icon-btn:hover .body,
+  .icon-btn:hover .handle { corner-shape: bevel; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 7px; cursor: pointer;
+    font: inherit; font-size: 0.85rem; font-weight: 500; border: none;
+    padding: 11px 21px;
+    border-radius: 980px;
+    corner-shape: squircle;
+  }
+  .btn-brand { background: var(--brand); color: #fff; }
+  .btn-brand:hover { background: var(--brand-dark); corner-shape: superellipse(3); }
+  .btn-link { color: var(--brand); font-size: 0.85rem; }
+  .btn-link:hover { text-decoration: underline; }
+
+  .hero { padding: 60px 0 26px; }
+  .hero-row { display: flex; align-items: center; justify-content: space-between; gap: 44px; }
+  .hero h1 { font-size: clamp(2.4rem, 5.4vw, 3.3rem); max-width: 24ch; }
+  .hero .lede { margin-top: 14px; font-size: 1.02rem; color: var(--ink-soft); max-width: 46ch; }
+  .hero-cta { display: flex; align-items: center; gap: 12px; margin-top: 26px; flex-wrap: wrap; }
+
+  .rail { padding: 32px 0 6px; }
+  .rail-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; }
+  .rail-item {
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+    padding: 22px 10px 18px;
+    background: var(--grey);
+    font-size: 0.82rem; font-weight: 500;
+    border-radius: 22px;
+    corner-shape: squircle;
+  }
+  .rail-item:hover { background: var(--grey-2); }
+
+  .glyph { position: relative; display: grid; place-items: center; width: 58px; height: 58px; --surface: var(--grey); }
+  .glyph > * { position: absolute; }
+  .rail-item:hover .glyph { --surface: var(--grey-2); }
+
+  .ring-disc { width: 54px; height: 54px; background: var(--ink); border-radius: 50%; corner-shape: superellipse(1.15); }
+  .ring-hole { width: 23px; height: 23px; background: var(--surface); border-radius: 50%; corner-shape: superellipse(1.15); }
+  .rail-item:hover .ring-disc,
+  .rail-item:hover .ring-hole { corner-shape: bevel; }
+
+  .quad { display: grid; gap: 3px; grid-template-columns: repeat(2, 26px); grid-template-rows: repeat(2, 26px); }
+  .quad > span { background: var(--sky); corner-shape: squircle; }
+  .quad > span:nth-child(1) { border-radius: 100% 0 0 0; }
+  .quad > span:nth-child(2) { border-radius: 0 100% 0 0; }
+  .quad > span:nth-child(3) { border-radius: 0 0 0 100%; }
+  .quad > span:nth-child(4) { border-radius: 0 0 100% 0; }
+  .rail-item:hover .quad > span { corner-shape: scoop; }
+
+  .stars4 { display: grid; grid-template-columns: repeat(2, 27px); grid-template-rows: repeat(2, 27px); }
+  .stars4 > span { background: var(--purple); border-radius: 50%; corner-shape: scoop; }
+  .rail-item:hover .stars4 > span { corner-shape: squircle; }
+
+  .pin { width: 28px; height: 28px; background: var(--orange); corner-shape: superellipse(1.5); }
+  .pin-tl { border-radius: 0 100% 0 100%; transform: translate(-14px, -14px); }
+  .pin-tr { border-radius: 100% 0 100% 0; transform: translate(14px, -14px); }
+  .pin-bl { border-radius: 100% 0 100% 0; transform: translate(-14px, 14px); }
+  .pin-br { border-radius: 0 100% 0 100%; transform: translate(14px, 14px); }
+  .rail-item:hover .pin { corner-shape: bevel; }
+
+  .daisy-petal { width: 56px; height: 15px; background: var(--green); border-radius: 100% 0 100% 0; corner-shape: superellipse(0.75); }
+  .daisy-petal:nth-child(2) { transform: rotate(36deg); }
+  .daisy-petal:nth-child(3) { transform: rotate(72deg); }
+  .daisy-petal:nth-child(4) { transform: rotate(108deg); }
+  .daisy-petal:nth-child(5) { transform: rotate(144deg); }
+  .rail-item:hover .daisy-petal { corner-shape: square; }
+
+  .clover-lobe { width: 25px; height: 25px; background: var(--ink); border-radius: 50% 50% 50% 0; corner-shape: superellipse(1.1); }
+  .clover-lobe.tl { transform: translate(-13px, -13px) rotate(-90deg); }
+  .clover-lobe.tr { transform: translate(13px, -13px); }
+  .clover-lobe.br { transform: translate(13px, 13px) rotate(90deg); }
+  .clover-lobe.bl { transform: translate(-13px, 13px) rotate(180deg); }
+  .rail-item:hover .clover-lobe { corner-shape: superellipse(-0.4); }
+
+  .latest { padding: 58px 0 0; }
+  .section-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 22px; }
+  .section-head p { color: var(--ink-soft); margin-top: 8px; font-size: 0.95rem; }
+
+  .card-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+  .card {
+    position: relative; display: flex; flex-direction: column; align-items: center;
+    padding: 22px 20px 26px; text-align: center;
+    background: var(--grey);
+    border-radius: 26px;
+    corner-shape: squircle;
+  }
+  .card:hover { corner-shape: superellipse(4); transform: translateY(-4px); }
+  .card .stage { height: 196px; display: grid; place-items: center; margin: 16px 0 10px; }
+  .card .kicker { font-size: 0.72rem; font-weight: 600; color: var(--orange); }
+  .card h3 { font-size: 1.1rem; margin: 5px 0 4px; }
+  .card .sub { font-size: 0.78rem; color: var(--ink-soft); margin-bottom: auto; }
+  .card .price { font-size: 0.78rem; margin-top: 12px; color: var(--ink); }
+  .card .buy { margin-top: 16px; }
+
+  .tag {
+    position: absolute; top: 14px; left: 14px;
+    transition:
+      corner-top-left-shape var(--morph), corner-top-right-shape var(--morph),
+      corner-bottom-right-shape var(--morph), corner-bottom-left-shape var(--morph);
+    font-size: 0.62rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 4px 9px; border-radius: 9px; color: #fff;
+  }
+  .tag-new  { background: var(--ink); corner-shape: bevel; }
+  .tag-save { background: var(--orange); corner-shape: notch; }
+
+  .obj { position: relative; display: grid; place-items: center; }
+
+  .book { position: relative; width: 118px; height: 158px; }
+  .book-cover {
+    position: absolute; inset: 0;
+    background: var(--sky);
+    border-radius: 10px 30px 10px 10px;
+    corner-shape: squircle bevel squircle squircle;
+  }
+  .book-fold {
+    position: absolute; right: 0; top: 0; width: 30px; height: 30px;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 0 30px 0 0;
+    corner-shape: square scoop square square;
+  }
+  .book-spine {
+    position: absolute; left: 0; top: 0; bottom: 0; width: 15px;
+    background: var(--ink);
+    border-radius: 10px 4px 4px 10px;
+    corner-shape: squircle bevel bevel squircle;
+  }
+  .book-band {
+    position: absolute; left: 26px; right: 16px; top: 58px; height: 9px;
+    background: rgba(23, 32, 58, 0.22);
+    border-radius: 6px;
+    corner-shape: bevel;
+  }
+
+  .pencil { position: relative; display: flex; flex-direction: column; align-items: center; }
+  .pencil-tip {
+    width: 30px; height: 34px;
+    background: var(--ink);
+    border-radius: 100% 100% 3px 3px;
+    corner-shape: bevel bevel square square;
+  }
+  .pencil-body {
+    width: 30px; height: 104px;
+    background: var(--orange);
+    border-radius: 3px;
+    corner-shape: square;
+  }
+  .pencil-ferrule {
+    width: 30px; height: 14px;
+    background: var(--steel);
+    border-radius: 4px;
+    corner-shape: bevel;
+  }
+  .pencil-eraser {
+    width: 30px; height: 22px;
+    background: var(--brand);
+    border-radius: 3px 3px 12px 12px;
+    corner-shape: square square squircle squircle;
+  }
+
+  .sheet {
+    position: relative; width: 132px; height: 152px;
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    corner-shape: notch;
+  }
+  .sheet > span { position: absolute; }
+  .sticker-star  { left: 16px; top: 16px; width: 46px; height: 46px; background: var(--purple); border-radius: 50%; corner-shape: scoop; }
+  .sticker-gem   { right: 16px; top: 24px; width: 40px; height: 40px; background: var(--green); border-radius: 50%; corner-shape: bevel; }
+  .sticker-blob  { left: 30px; bottom: 20px; width: 70px; height: 52px; background: var(--orange); border-radius: 40%; corner-shape: squircle; }
+
+  .tape { position: relative; width: 138px; height: 138px; }
+  .tape-roll {
+    position: absolute; inset: 0;
+    background: var(--green);
+    border-radius: 50%;
+    corner-shape: superellipse(1.15);
+  }
+  .tape-core {
+    position: absolute; left: 44px; top: 44px; width: 50px; height: 50px;
+    background: var(--grey);
+    border-radius: 50%;
+    corner-shape: superellipse(1.15);
+  }
+  .tape-tail {
+    position: absolute; right: -26px; bottom: 26px; width: 58px; height: 26px;
+    background: var(--green);
+    border-radius: 0 100% 0 100%;
+    corner-shape: bevel;
+  }
+
+  .arrow-nav { display: flex; gap: 8px; }
+  .arrow-btn {
+    width: 48px; height: 38px; display: grid; place-items: center; cursor: pointer;
+    background: var(--brand); border: 1px solid var(--brand-dark);
+    color: transparent;
+    font-size: 0.95rem; line-height: 1;
+    border-radius: 60% 40% 40% 60% / 25% 50% 50% 25%;
+    corner-shape: notch bevel bevel notch;
+  }
+  .arrow-btn.prev { transform: scaleX(-1); }
+  .arrow-btn:hover { background: var(--brand-dark); color: var(--white); corner-shape: squircle; }
+
+  .steps { padding: 60px 0 0; }
+  .step-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .step {
+    padding: 20px 24px 20px 48px;
+    background: var(--grey);
+    border-radius: 8% 20% 20% 8% / 50%;
+    corner-shape: notch bevel bevel notch;
+  }
+  .step:hover { corner-shape: squircle; }
+  .step b { display: block; font-size: 0.92rem; }
+  .step span { font-size: 0.8rem; color: var(--ink-soft); }
+  .step em { font-style: normal; font-weight: 600; color: var(--orange); margin-right: 8px; }
+
+  .band {
+    margin-top: 64px; padding: 56px 0 52px;
+    background: var(--ink); color: var(--grey);
+    border-radius: 64px 64px 0 0;
+    corner-shape: scoop scoop square square;
+  }
+  .band h2 { color: #fff; }
+  .band-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 24px; }
+  .band-card {
+    padding: 24px 22px 26px;
+    background: #2c2c2e;
+    border-radius: 24px;
+    corner-shape: squircle;
+  }
+  .band-card:hover { background: #37373a; corner-shape: superellipse(4); }
+  .band-card b { display: block; font-size: 1rem; }
+  .band-card p { font-size: 0.84rem; color: rgba(245, 245, 247, 0.7); margin: 6px 0 14px; }
+  .band-card a { color: #f0a08c; font-size: 0.82rem; }
+  .band-icon {
+    width: 34px; height: 34px; display: grid; place-items: center; margin-bottom: 14px;
+    background: rgba(255, 255, 255, 0.14); color: #fff; font-size: 0.85rem;
+    border-radius: 12px;
+    corner-shape: bevel;
+  }
+  .band-card:hover .band-icon { corner-shape: squircle; }
+
+  .house { position: relative; display: block; width: 40px; height: 38px; margin-bottom: 14px; --surface: #2c2c2e; }
+  .band-card:hover .house { --surface: #37373a; }
+  .house-roof {
+    position: absolute; left: 2px; bottom: 0; width: 36px; height: 36px;
+    background: #fff;
+    border-radius: 18px 18px 0 0;
+    corner-shape: bevel bevel square square;
+  }
+  .house-door {
+    position: absolute; left: 50%; bottom: 0; transform: translateX(-50%);
+    width: 13px; height: 15px;
+    background: var(--surface);
+    border-radius: 50% 50% 0 0;
+    corner-shape: superellipse(1.4);
+  }
+  .band-card:hover .house-roof { corner-shape: superellipse(1.7) superellipse(1.7) square square; }
+  .band-card:hover .house-door { corner-shape: bevel; }
+
+  .tradein-section { padding: 60px 0 0; }
+  .tradein {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 28px; flex-wrap: wrap;
+    padding: 30px 36px;
+    background: var(--grey); border: 1px solid var(--line);
+    border-radius: 30px;
+    corner-shape: notch;
+  }
+  .tradein:hover { corner-shape: squircle; }
+  .tradein h2 { font-size: 1.35rem; margin-top: 2px; }
+  .tradein p { color: var(--ink-soft); font-size: 0.88rem; margin-top: 5px; max-width: 52ch; }
+  .estimate {
+    font-size: 0.76rem; font-weight: 600; letter-spacing: 0.03em; white-space: nowrap;
+    background: var(--white); border: 1px solid var(--line);
+    padding: 12px 20px;
+    border-radius: 16px;
+    corner-shape: notch;
+  }
+  .estimate:hover { corner-shape: squircle; }
+
+  .reviews { padding: 60px 0 0; }
+  .review-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .review {
+    padding: 22px 22px 20px;
+    background: var(--grey);
+    border-radius: 24px 24px 24px 0;
+    corner-shape: round round round notch;
+  }
+  .review:hover { border-radius: 24px 24px 24px 22px; corner-shape: squircle squircle squircle notch; }
+  .review p { font-size: 0.9rem; margin: 12px 0 16px; }
+  .stars { display: flex; gap: 5px; }
+  .stars i { width: 12px; height: 12px; background: var(--orange); border-radius: 50%; corner-shape: scoop; }
+  .review:hover .stars i { corner-shape: squircle; }
+  .reviewer { display: flex; align-items: center; gap: 10px; }
+  .avatar { width: 36px; height: 36px; display: grid; place-items: center; color: #fff; font-size: 0.76rem; font-weight: 600; border-radius: 12px; corner-shape: squircle; }
+  .reviewer b { font-size: 0.83rem; }
+  .reviewer span { display: block; font-size: 0.73rem; color: var(--ink-soft); }
+
+  .app-section { padding: 60px 0 0; }
+  .app-panel {
+    text-align: center; padding: 50px 36px 54px;
+    background: var(--grey);
+    border-radius: 64px 64px 28px 28px;
+    corner-shape: scoop scoop squircle squircle;
+  }
+  .app-panel p { color: var(--ink-soft); margin-top: 10px; font-size: 0.95rem; }
+  .app-form { display: flex; gap: 10px; justify-content: center; margin-top: 22px; flex-wrap: wrap; }
+  .app-form input {
+    font: inherit; font-size: 0.88rem; outline: none;
+    background: var(--white); border: 1px solid var(--line); color: var(--ink);
+    padding: 12px 18px; width: min(300px, 70vw);
+    border-radius: 16px;
+    corner-shape: squircle;
+  }
+  .app-form input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(226, 84, 60, 0.2); }
+
+  .twinkle { position: relative; width: 56px; height: 56px; margin: 0 auto 14px; --surface: var(--grey); }
+  .twinkle > * { position: absolute; inset: 0; }
+  .twinkle-star { background: var(--orange); border-radius: 50%; corner-shape: scoop; }
+  .twinkle-hole { background: var(--surface); border-radius: 50%; corner-shape: scoop; scale: 0; }
+  .app-panel:hover .twinkle-hole { scale: 0.55; }
+
+  .chat-fab {
+    position: fixed; right: 20px; bottom: 20px; z-index: 50;
+    display: inline-flex; align-items: center; gap: 9px; cursor: pointer;
+    background: var(--ink); color: var(--white); border: none;
+    font: inherit; font-size: 0.83rem; font-weight: 500;
+    padding: 13px 20px;
+    border-radius: 24px 24px 24px 0;
+    corner-shape: round;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.22);
+  }
+  .chat-fab:hover { border-radius: 24px 24px 24px 22px; corner-shape: squircle; }
+  .chat-fab .dot { width: 8px; height: 8px; background: var(--green); border-radius: 50%; corner-shape: superellipse(1.2); }
+
+  footer { margin-top: 64px; background: var(--grey); padding: 32px 0 40px; font-size: 0.76rem; }
+  .foot-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 28px; padding: 6px 0 26px; border-bottom: 1px solid var(--line); }
+  .foot-grid h4 { font-size: 0.76rem; font-weight: 600; margin-bottom: 9px; }
+  .foot-grid li { list-style: none; padding: 3px 0; color: var(--ink-soft); }
+  .foot-grid a:hover { text-decoration: underline; }
+  .foot-bar { display: flex; align-items: center; justify-content: space-between; gap: 18px; flex-wrap: wrap; padding-top: 18px; color: var(--ink-soft); }
+  .foot-brand { display: flex; align-items: center; gap: 9px; }
+  .pays { display: flex; gap: 6px; }
+  .pays span {
+    padding: 4px 9px; background: var(--white); border: 1px solid var(--line);
+    font-size: 0.62rem; font-weight: 700; letter-spacing: 0.04em;
+    border-radius: 8px;
+    corner-shape: bevel;
+  }
+
+  .toast {
+    position: fixed; left: 50%; bottom: 26px; z-index: 60;
+    transform: translate(-50%, 18px);
+    background: var(--ink); color: var(--white);
+    font-size: 0.84rem; padding: 12px 22px;
+    border-radius: 18px;
+    corner-shape: squircle;
+    opacity: 0; pointer-events: none;
+    transition: opacity 200ms ease, transform 200ms ease;
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  .btn:focus-visible,
+  .icon-btn:focus-visible,
+  .app-form input:focus-visible {
+    outline: 3px solid var(--brand);
+    outline-offset: 4px;
+  }
+
+  .card-featured {
+    box-shadow: 0 12px 34px 6px rgba(0, 0, 0, 0.11);
+  }
+  .card-featured:hover {
+    outline: 2px solid var(--brand);
+    outline-offset: 8px;
+  }
+
+  .rail-item:hover { box-shadow: 0 0 0 4px rgba(226, 84, 60, 0.2); }
+
+  .stars4 > span { box-shadow: 0 0 0 2px rgba(111, 90, 208, 0.32); }
+  .rail-item:hover .pin { outline: 1.5px solid rgba(235, 163, 47, 0.6); outline-offset: 3px; }
+
+  .tradein { box-shadow: 0 0 0 5px rgba(235, 163, 47, 0.16); }
+  .tradein:hover { outline: 2px solid var(--orange); outline-offset: 7px; }
+  .estimate:hover { box-shadow: 0 0 0 4px rgba(235, 163, 47, 0.22); }
+
+  .house-roof { box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2); }
+
+  .arrow-btn:hover { outline: 2px solid var(--brand-dark); outline-offset: 4px; }
+
+  .chat-fab:hover { outline: 2px solid rgba(255, 255, 255, 0.35); outline-offset: 5px; }
+
+  .card:hover .tag-new  { outline: 1.5px solid var(--ink); outline-offset: 3px; }
+  .card:hover .tag-save { outline: 1.5px solid var(--orange); outline-offset: 3px; }
+
+  @keyframes rise-in {
+    from { opacity: 0; translate: 0 28px; }
+    to   { opacity: 1; translate: none; }
+  }
+
+  .card {
+    animation: rise-in linear both;
+    animation-timeline: view();
+    animation-range: entry 5% cover 35%;
+  }
+
+  @keyframes settle-from-notch {
+    from { opacity: 0; translate: 0 20px; corner-shape: notch; }
+    to   { opacity: 1; translate: none; corner-shape: squircle; }
+  }
+
+  .rail-item {
+    animation: settle-from-notch linear both;
+    animation-timeline: view();
+    animation-range: entry 0% cover 30%;
+  }
+
+  @keyframes deepen-scoop {
+    from { border-radius: 10px 10px 0 0; }
+    to   { border-radius: 64px 64px 0 0; }
+  }
+
+  .band {
+    animation: deepen-scoop linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 100%;
+  }
+
+  @keyframes voucher-tear {
+    from { corner-shape: square; box-shadow: 0 0 0 0 rgba(235, 163, 47, 0); }
+    to   { corner-shape: notch; box-shadow: 0 0 0 5px rgba(235, 163, 47, 0.16); }
+  }
+
+  .tradein:not(:hover) {
+    animation: voucher-tear linear both;
+    animation-timeline: view();
+    animation-range: entry 10% cover 40%;
+  }
+
+  @keyframes hollow-out {
+    from { scale: 0; }
+    to   { scale: 0.55; }
+  }
+
+  .app-panel:not(:hover) .twinkle-hole {
+    animation: hollow-out linear both;
+    animation-timeline: view();
+    animation-range: entry 20% cover 45%;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .card, .rail-item, .band, .tradein:not(:hover), .app-panel:not(:hover) .twinkle-hole { animation: none; }
+  }
+
+  @media (max-width: 1000px) {
+    .globalnav .links { display: none; }
+    .hero-row { flex-direction: column; align-items: flex-start; }
+    .rail-grid { grid-template-columns: repeat(3, 1fr); }
+    .card-grid, .band-grid, .review-grid, .step-row, .foot-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 620px) {
+    .rail-grid, .card-grid, .band-grid, .review-grid, .step-row, .foot-grid { grid-template-columns: 1fr; }
+  }
+
+  .films { margin-top: 78px; }
+  .film-grid { display: grid; grid-template-columns: 1fr; margin-top: 26px; align-items: start; }
+  .film { position: relative; }
+  .film video {
+    display: block; width: 100%; height: 348px; background: var(--grey-2); object-fit: cover;
+  }
+  .film-feature video {
+    border-radius: 66px;
+    corner-shape: scoop;
+    border: 8px solid var(--ink);
+    box-shadow: 0 0 0 9px var(--brand);
+  }
+  .film-feature:hover video { corner-shape: squircle; }
+
+  .films .no-video { font-size: 0.8rem; color: var(--ink-soft); margin-top: 10px; }
+
+  @media (max-width: 760px) {
+    .film-grid { grid-template-columns: 1fr; }
+    .film video { height: 240px; }
+    .film-feature video { border-radius: 44px; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="globalnav">
+  <div class="wrap globalnav-row">
+    <a class="brand stamp-hover" href="#" aria-label="Foolscap Paper Co. home">
+      <span class="mark-slot mark-nav">
+        <span class="stamp">
+          <span class="stamp-body morph"></span>
+          <span class="stamp-punch morph"></span>
+        </span>
+      </span>
+      <span class="wordmark">Foolscap</span>
+    </a>
+    <div class="links">
+      <a href="#">Notebooks</a>
+      <a href="#">Pens &amp; pencils</a>
+      <a href="#">Paper</a>
+      <a href="#">Tape</a>
+      <a href="#">Stickers</a>
+      <a href="#">Ink</a>
+      <a href="#">Workshops</a>
+    </div>
+    <div class="icons">
+      <button class="icon-btn morph" aria-label="Search">
+        <span class="glyph-search">
+          <span class="lens morph"></span><span class="handle morph"></span>
+        </span>
+      </button>
+      <span class="bag-wrap">
+        <button class="icon-btn morph" aria-label="Bag" onclick="showBag()">
+          <span class="glyph-bag">
+            <span class="handle morph"></span><span class="body morph"></span>
+          </span>
+        </button>
+        <span class="bag-count" id="bagCount">2</span>
+      </span>
+    </div>
+  </div>
+</nav>
+
+<main>
+
+  <section class="wrap hero">
+    <div class="hero-row">
+      <div>
+        <h1>Good paper, sharp pencils, and a shop cat.</h1>
+        <p class="lede">Stationery from twelve small mills and studios. Every rounded thing on this page names its
+           corner shape — squircle, bevel, notch, scoop, superellipse — and interpolates when you hover it.</p>
+        <div class="hero-cta">
+          <button class="btn btn-brand morph">Shop new stock</button>
+        </div>
+      </div>
+      <div class="mark-slot mark-hero stamp-hover" aria-hidden="true">
+        <span class="stamp">
+          <span class="stamp-body morph"></span>
+          <span class="stamp-punch morph"></span>
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap latest">
+    <div class="section-head">
+      <div>
+        <h2>New on the shelf.</h2>
+        <p>Restocked this week, and the ones that never last.</p>
+      </div>
+      <div class="arrow-nav">
+        <button class="arrow-btn prev morph" aria-label="Previous">→</button>
+        <button class="arrow-btn morph" aria-label="Next">→</button>
+      </div>
+    </div>
+
+    <div class="card-grid">
+
+      <article class="card card-featured morph">
+        <span class="tag tag-new">New</span>
+        <div class="stage">
+          <div class="obj book">
+            <span class="book-cover"></span>
+            <span class="book-fold"></span>
+            <span class="book-spine"></span>
+            <span class="book-band"></span>
+          </div>
+        </div>
+        <span class="kicker">New</span>
+        <h3>Foolscap Notebook</h3>
+        <span class="sub">Squircle cover, 120gsm.</span>
+        <span class="price">$18 · A5, dot grid or ruled</span>
+        <button class="btn btn-brand buy morph" onclick="addToBag('Foolscap Notebook')">Add to bag</button>
+      </article>
+
+      <article class="card morph">
+        <div class="stage">
+          <div class="obj pencil">
+            <span class="pencil-tip"></span>
+            <span class="pencil-body"></span>
+            <span class="pencil-ferrule"></span>
+            <span class="pencil-eraser"></span>
+          </div>
+        </div>
+        <span class="kicker">Shop favourite</span>
+        <h3>Blackline Pencils</h3>
+        <span class="sub">Bevelled point, cedar.</span>
+        <span class="price">$14 · HB, 2B or 4B</span>
+        <button class="btn btn-brand buy morph" onclick="addToBag('Blackline Pencils')">Add to bag</button>
+      </article>
+
+      <article class="card morph">
+        <span class="tag tag-save">Save</span>
+        <div class="stage">
+          <div class="obj sheet">
+            <span class="sticker-star"></span>
+            <span class="sticker-gem"></span>
+            <span class="sticker-blob"></span>
+          </div>
+        </div>
+        <span class="kicker">Back in stock</span>
+        <h3>Perforated Sticker Sheet</h3>
+        <span class="sub">Notched corners, kiss-cut.</span>
+        <span class="price">$6 · sheet of nine</span>
+        <button class="btn btn-brand buy morph" onclick="addToBag('Perforated Sticker Sheet')">Add to bag</button>
+      </article>
+
+      <article class="card morph">
+        <div class="stage">
+          <div class="obj tape">
+            <span class="tape-roll"></span>
+            <span class="tape-tail"></span>
+            <span class="tape-core"></span>
+          </div>
+        </div>
+        <span class="kicker">New</span>
+        <h3>Washi Tape, Sage</h3>
+        <span class="sub">15mm, tears by hand.</span>
+        <span class="price">$5 · 10m roll</span>
+        <button class="btn btn-brand buy morph" onclick="addToBag('Washi Tape, Sage')">Add to bag</button>
+      </article>
+
+    </div>
+  </section>
+
+  <section class="wrap reviews">
+    <div class="section-head">
+      <div>
+        <h2>What people write back.</h2>
+        <p>1,412 notes from people who ordered this month.</p>
+      </div>
+      <a class="btn-link" href="#">Read all reviews ›</a>
+    </div>
+    <div class="review-grid">
+
+      <article class="review morph">
+        <div class="stars"><i class="morph"></i><i class="morph"></i><i class="morph"></i><i class="morph"></i><i class="morph"></i></div>
+        <p>“Ordered at 9pm, it was through the letterbox two days later, wrapped like a present. The dot grid is exactly the shade I wanted.”</p>
+        <div class="reviewer">
+          <span class="avatar" style="background:var(--brand)">NS</span>
+          <span><b>Nicole Sullivan</b><span>Verified buyer · France</span></span>
+        </div>
+      </article>
+
+      <article class="review morph">
+        <div class="stars"><i class="morph"></i><i class="morph"></i><i class="morph"></i><i class="morph"></i><i class="morph"></i></div>
+        <p>“Took my empty ink bottles in and walked out with a third off. No fuss, and they remembered which nib I use.”</p>
+        <div class="reviewer">
+          <span class="avatar" style="background:var(--green)">YW</span>
+          <span><b>Yulun Wu</b><span>Verified buyer · Illinois</span></span>
+        </div>
+      </article>
+
+      <article class="review morph">
+        <div class="stars"><i class="morph"></i><i class="morph"></i><i class="morph"></i><i class="morph"></i><i class="morph"></i></div>
+        <p>“Went to the bookbinding evening not knowing a thing. Came home with a hardback I'd actually give someone.”</p>
+        <div class="reviewer">
+          <span class="avatar" style="background:var(--purple)">SF</span>
+          <span><b>Simon Fraser</b><span>Verified buyer · United Kingdom</span></span>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <section class="wrap films">
+    <div class="section-head">
+      <div>
+        <h2>See our products in use</h2>
+      </div>
+    </div>
+
+    <div class="film-grid">
+      <div class="film film-feature morph">
+        <video src="mill-footage.mp4" muted autoplay loop playsinline></video>
+      </div>
+    </div>
+    <p class="no-video" id="filmNote" hidden></p>
+  </section>
+
+  <section class="wrap steps">
+    <div class="section-head">
+      <div>
+        <h2>Packed by hand, posted the same day.</h2>
+        <p>The three tiles below are the playground's Arrow preset.</p>
+      </div>
+      <a class="btn-link" href="#">Visit the shop ›</a>
+    </div>
+    <div class="step-row">
+      <div class="step morph"><b><em>01</em>Pick your paper</b><span>Dot grid, ruled or blank — say so at checkout and we'll match it.</span></div>
+      <div class="step morph"><b><em>02</em>Wrapped in the back room</b><span>Tissue, a wax seal, and a note if it's a gift.</span></div>
+      <div class="step morph"><b><em>03</em>Out by five</b><span>Anything ordered before 3pm goes in the same afternoon's post.</span></div>
+    </div>
+  </section>
+
+  <section class="wrap app-section">
+    <div class="app-panel">
+      <div class="twinkle">
+        <span class="twinkle-star morph"></span><span class="twinkle-hole morph"></span>
+      </div>
+      <h2>Hear about restocks first.</h2>
+      <p>One letter a month: what came in, what's nearly gone, and the workshop dates.</p>
+      <form class="app-form" onsubmit="subscribe(event)">
+        <input type="email" placeholder="you@example.com" aria-label="Email address" required>
+        <button class="btn btn-brand morph" type="submit">Join the list</button>
+      </form>
+    </div>
+  </section>
+
+</main>
+
+<button class="chat-fab morph" onclick="openChat()">
+  <span class="dot"></span> Ask the shop
+</button>
+
+<div class="toast" id="toast"></div>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <h4>Shop</h4>
+        <ul>
+          <li><a href="#">Notebooks</a></li>
+          <li><a href="#">Pens &amp; pencils</a></li>
+          <li><a href="#">Loose paper</a></li>
+          <li><a href="#">Gift cards</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Orders</h4>
+        <ul>
+          <li><a href="#">Track a parcel</a></li>
+          <li><a href="#">Returns</a></li>
+          <li><a href="#">Refill scheme</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>How it's made</h4>
+        <ul>
+          <li><a href="#">Our mills</a></li>
+          <li><a href="#">Paper weights</a></li>
+          <li><a href="#">corner-shape</a></li>
+          <li><a href="#">CSS Borders 4</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>This page</h4>
+        <ul>
+          <li><a href="corner-shape-demo.html">Playground &amp; gallery</a></li>
+          <li><a href="corner-shape-designs.html">Shape combinations</a></li>
+          <li><a href="corner-shape-store-fernwood.html">Earlier storefront draft</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-bar">
+      <span class="foot-brand stamp-hover">
+        <span class="mark-slot mark-foot" aria-hidden="true">
+          <span class="stamp">
+            <span class="stamp-body morph"></span>
+            <span class="stamp-punch morph"></span>
+          </span>
+        </span>
+        Foolscap Paper Co. · a corner-shape demo · 2026
+      </span>
+      <div class="pays"><span>VISA</span><span>MC</span><span>AMEX</span><span>PAY</span></div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  const bagCount = document.getElementById('bagCount');
+  const toast = document.getElementById('toast');
+  let toastTimer;
+
+  function showToast(message) {
+    toast.textContent = message;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+  }
+
+  function addToBag(itemName) {
+    bagCount.textContent = Number(bagCount.textContent) + 1;
+    bagCount.classList.remove('bump');
+    void bagCount.offsetWidth;
+    bagCount.classList.add('bump');
+    showToast(itemName + ' added to your bag.');
+  }
+
+  function showBag() {
+    showToast('Your bag has ' + bagCount.textContent + ' items.');
+  }
+
+  function openChat() {
+    showToast('Someone in the back room will be with you shortly.');
+  }
+
+  function subscribe(event) {
+    event.preventDefault();
+    event.target.reset();
+    showToast('Thanks — check your inbox to confirm.');
+  }
+
+  (function startFilms() {
+    const films = document.querySelectorAll('.film video');
+    if (!films.length) return;
+
+    let autoplayRefused = false;
+
+    films.forEach(video => {
+      video.play().catch(() => {
+        if (autoplayRefused) return;
+        autoplayRefused = true;
+        const note = document.getElementById('filmNote');
+        note.hidden = false;
+        note.textContent = 'This browser refused to autoplay the footage, so the films are showing as still frames.';
+      });
+    });
+  })();
+</script>
+
+</body>
+</html>

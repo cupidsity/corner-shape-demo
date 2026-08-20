@@ -1,0 +1,1225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>corner-shape</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    @font-face { font-family: "SF Hello"; src: local("SF Hello"), local("HelloSF"), local("SF Pro Display"), local(".SF Pro Display"); }
+
+    :root {
+      --glass: rgba(255,255,255,0.62);
+      --glass-border: rgba(255,255,255,0.5);
+      --glass-shadow: 0 8px 32px rgba(0,0,0,0.10), inset 0 1px 0 rgba(255,255,255,0.6);
+      --blur: blur(24px) saturate(1.6);
+      --text: #1d1d1f;
+      --label: rgba(0,0,0,0.44);
+      --accent: #594C80;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      min-height: 100vh;
+      font-family: "SF Hello", "SF Pro Display", -apple-system, sans-serif;
+      color: var(--text);
+      overflow-x: hidden;
+      background: #e8e0f5;
+    }
+
+    .bg-canvas {
+      position: fixed; inset: 0; z-index: 0;
+      background:
+        radial-gradient(ellipse 80% 70% at 15% 20%, #ccc0ef 0%, transparent 60%),
+        radial-gradient(ellipse 60% 60% at 85% 80%, #a8c8e8 0%, transparent 60%),
+        radial-gradient(ellipse 50% 50% at 50% 50%, #d4e8c4 0%, transparent 60%),
+        #e8e2f2;
+      animation: bgShift 18s ease-in-out infinite alternate;
+    }
+    @keyframes bgShift {
+      0%   { filter: hue-rotate(0deg) brightness(1); }
+      50%  { filter: hue-rotate(12deg) brightness(1.04); }
+      100% { filter: hue-rotate(-8deg) brightness(0.98); }
+    }
+
+    .glass {
+      background: var(--glass);
+      backdrop-filter: var(--blur);
+      -webkit-backdrop-filter: var(--blur);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--glass-shadow);
+    }
+
+    .page {
+      position: relative; z-index: 1;
+      max-width: 1160px; margin: 0 auto;
+      padding: 0 48px 80px;
+    }
+
+    .hero { padding: 72px 0 40px; text-align: center; }
+    .eyebrow {
+      display: inline-block; font-size: 0.7rem; font-weight: 600;
+      letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent);
+      background: rgba(89,76,128,0.1); padding: 4px 14px; border-radius: 100px;
+      margin-bottom: 18px; backdrop-filter: blur(8px);
+    }
+    h1 {
+      font-size: clamp(3rem, 6vw, 5rem); font-weight: 700;
+      letter-spacing: -0.04em; line-height: 1.02;
+      background: linear-gradient(135deg, #1d1d1f 0%, #4a3a6e 50%, #2d4859 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .subtitle {
+      margin-top: 16px; font-size: 1.05rem; color: var(--label);
+      max-width: 480px; margin-left: auto; margin-right: auto;
+      line-height: 1.55; font-weight: 400;
+    }
+
+    .main-grid { display: flex; flex-direction: row; gap: 20px; align-items: start; }
+    .left-col  { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+    .panel     { flex: 0 0 360px; width: 360px; display: flex; flex-direction: column; gap: 14px; }
+
+    .stage-wrap { border-radius: 24px; overflow: hidden; position: relative; }
+    .stage {
+      min-height: 320px; display: flex; align-items: center; justify-content: center;
+      padding: 48px; position: relative;
+    }
+    .stage::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 50%;
+      background: linear-gradient(180deg, rgba(255,255,255,0.18) 0%, transparent 100%);
+      pointer-events: none; border-radius: 24px 24px 0 0;
+    }
+
+    #demoShape {
+      transition: width 0.3s ease, height 0.3s ease, border-radius 0.3s ease,
+                  background 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 0.8rem; font-weight: 500;
+      letter-spacing: 0.03em; cursor: default; user-select: none; position: relative;
+    }
+    #demoShape::after {
+      content: ''; position: absolute; inset: 0; border-radius: inherit;
+      corner-top-left-shape: var(--corner-tl, round);
+      corner-top-right-shape: var(--corner-tr, round);
+      corner-bottom-right-shape: var(--corner-br, round);
+      corner-bottom-left-shape: var(--corner-bl, round);
+      background: linear-gradient(145deg, rgba(255,255,255,0.25) 0%, transparent 55%);
+      pointer-events: none;
+    }
+    #demoShape.no-gloss::after { content: none; }
+
+    #demoShape.pop { animation: shapeIn 0.38s cubic-bezier(0.34,1.2,0.64,1); }
+    @keyframes shapeIn { 0% { transform: scale(0.88); opacity:0.7; } 100% { transform: scale(1); opacity:1; } }
+
+    .code-panel {
+      border-radius: 16px; padding: 20px 22px;
+      font-family: "SF Mono", "Fira Code", ui-monospace, monospace;
+      font-size: 0.73rem; line-height: 1.85;
+    }
+    textarea.code-panel {
+      width: 100%; resize: none; outline: none; border: none;
+      caret-color: #7FB1D1; color: #B9B0D9; min-height: 280px;
+    }
+    .code-panel .selector { color: #7FB1D1; }
+    .code-panel .brace    { color: rgba(255,255,255,0.25); }
+    .code-panel .prop     { color: #B9B0D9; padding-left: 18px; }
+    .code-panel .val      { color: #53AC79; }
+    .code-panel .shape-v  { color: #FDC35D; font-weight: 600; }
+    .code-panel .semi     { color: rgba(255,255,255,0.2); }
+    .code-panel-bg {
+      background: rgba(20,16,32,0.82); border: 1px solid rgba(255,255,255,0.1);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    }
+
+    .card { border-radius: 18px; padding: 20px; }
+    .card-title {
+      font-size: 0.67rem; font-weight: 600; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--label); margin-bottom: 14px;
+    }
+
+    .preset-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; }
+    .preset-btn {
+      appearance: none; background: rgba(255,255,255,0.35);
+      border: 1px solid rgba(255,255,255,0.5); border-radius: 10px;
+      cursor: pointer; padding: 9px 4px 7px;
+      display: flex; flex-direction: column; align-items: center; gap: 5px;
+      font-family: inherit; font-size: 0.63rem; font-weight: 500;
+      color: var(--label); letter-spacing: 0.03em;
+      transition: all 0.15s; backdrop-filter: blur(8px);
+    }
+    .preset-btn:hover { background: rgba(255,255,255,0.55); color: var(--accent); border-color: rgba(89,76,128,0.4); }
+    .preset-btn.active { background: rgba(89,76,128,0.15); border-color: rgba(89,76,128,0.6); color: var(--accent); box-shadow: inset 0 1px 0 rgba(255,255,255,0.4); }
+    .preset-thumb { width: 36px; height: 24px; display: grid; place-items: center; }
+    .preset-thumb-shape { display: block; }
+
+    .corner-outer {
+      position: relative; width: 164px; height: 100px; margin: 0 auto 6px;
+    }
+    .corner-outer::before {
+      content: ''; position: absolute; inset: 20px;
+      border: 1.5px dashed rgba(0,0,0,0.12); border-radius: 8px;
+    }
+    .corner-sel { position: absolute; display: flex; flex-direction: column; gap: 2px; }
+    .corner-sel label { font-size: 0.58rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--label); }
+    .corner-sel select {
+      appearance: none;
+      background: rgba(255,255,255,0.6) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%236e6e73'/%3E%3C/svg%3E") right 6px center no-repeat;
+      border: 1px solid rgba(255,255,255,0.7); border-radius: 6px;
+      padding: 3px 18px 3px 6px; font-family: inherit; font-size: 0.67rem;
+      color: #1d1d1f; cursor: pointer; outline: none; backdrop-filter: blur(8px); width: 74px;
+    }
+    .corner-sel.tl { top: 0; left: 0; align-items: flex-start; }
+    .corner-sel.tr { top: 0; right: 0; align-items: flex-end; }
+    .corner-sel.bl { bottom: 0; left: 0; align-items: flex-start; }
+    .corner-sel.br { bottom: 0; right: 0; align-items: flex-end; }
+
+    .radius-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px;
+      margin-top: 14px; padding-top: 14px;
+      border-top: 1px solid rgba(0,0,0,0.07);
+    }
+    .radius-cell { display: flex; flex-direction: column; gap: 4px; }
+    .radius-cell label { font-size: 0.62rem; font-weight: 500; color: var(--label); letter-spacing: 0.05em; }
+    .radius-cell-inner { display: flex; align-items: center; gap: 7px; }
+    .radius-cell input[type=range] { flex: 1; }
+    .radius-cell .rv { font-size: 0.65rem; color: var(--label); font-variant-numeric: tabular-nums; min-width: 28px; text-align: right; }
+
+    .slider-row { display: flex; flex-direction: column; gap: 5px; }
+    .slider-row + .slider-row { margin-top: 10px; }
+    .slider-label { display: flex; justify-content: space-between; font-size: 0.78rem; font-weight: 500; }
+    .slider-label .badge { font-size: 0.7rem; color: var(--label); font-weight: 400; font-variant-numeric: tabular-nums; }
+    input[type=range] {
+      -webkit-appearance: none; width: 100%; height: 3px;
+      border-radius: 2px; background: rgba(0,0,0,0.15); outline: none; cursor: pointer;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 17px; height: 17px; border-radius: 50%;
+      background: white; box-shadow: 0 1px 8px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.8);
+      cursor: pointer; border: 2px solid rgba(89,76,128,0.4); transition: transform 0.1s;
+    }
+    input[type=range]:active::-webkit-slider-thumb { transform: scale(1.2); }
+
+    .curve-section { margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(0,0,0,0.07); }
+    .corner-curve-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; }
+    .corner-curve-row { display: flex; flex-direction: column; gap: 3px; }
+    .corner-curve-row label { font-size: 0.62rem; font-weight: 500; color: var(--label); letter-spacing: 0.05em; }
+    .corner-curve-inner { display: flex; align-items: center; gap: 7px; }
+    .corner-curve-inner input[type=range] { flex: 1; }
+    .corner-curve-inner .cv { font-size: 0.65rem; color: var(--label); font-variant-numeric: tabular-nums; min-width: 28px; text-align: right; }
+    .corner-curve-row.hidden { display: none; }
+
+    .view-toggle {
+      display: flex; background: rgba(0,0,0,0.07); border-radius: 8px; padding: 3px;
+      position: absolute; top: 14px; right: 16px;
+    }
+    .view-btn {
+      appearance: none; border: none; background: transparent; border-radius: 6px;
+      padding: 5px 10px; font-family: inherit; font-size: 0.65rem; font-weight: 500;
+      color: var(--label); cursor: pointer; letter-spacing: 0.03em;
+      transition: background 0.15s, color 0.15s; white-space: nowrap;
+    }
+    .view-btn.active { background: white; color: var(--text); box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+
+    .section-head {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .section-head .card-title { margin-bottom: 0; }
+    .link-btn {
+      appearance: none; cursor: pointer; font-family: inherit;
+      font-size: 0.62rem; font-weight: 600; letter-spacing: 0.06em;
+      padding: 4px 10px; border-radius: 100px;
+      background: rgba(255,255,255,0.4); border: 1px solid rgba(255,255,255,0.6);
+      color: var(--label); backdrop-filter: blur(8px);
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+      display: inline-flex; align-items: center; gap: 5px; white-space: nowrap;
+    }
+    .link-btn:hover { background: rgba(255,255,255,0.6); color: var(--accent); }
+    .link-btn.active {
+      background: rgba(89,76,128,0.16); border-color: rgba(89,76,128,0.55);
+      color: var(--accent); box-shadow: inset 0 1px 0 rgba(255,255,255,0.4);
+    }
+    .link-btn .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: rgba(0,0,0,0.18); transition: background 0.15s;
+    }
+    .link-btn.active .dot { background: var(--accent); }
+
+    #playgroundScreen[hidden], #designsScreen[hidden] { display: none !important; }
+
+    .screen-toggle {
+      display: inline-flex; gap: 3px; margin-top: 24px; padding: 4px;
+      background: rgba(255,255,255,0.45); border: 1px solid var(--glass-border);
+      border-radius: 11px; backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+      box-shadow: var(--glass-shadow);
+    }
+    .screen-toggle .view-btn { padding: 7px 18px; font-size: 0.72rem; }
+
+    .designs-card {
+      background: #fff; border-radius: 24px; padding: 8px 24px 32px;
+      border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow);
+    }
+    .designs-head { padding-top: 26px; text-align: center; }
+
+    #designsScreen {
+      --red: #e0312a;
+      --bg: #ffffff;
+      --cell: 120px;
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 34px 28px;
+      width: max-content;
+      margin: 56px auto;
+      justify-items: center;
+    }
+
+    .cell {
+      width: var(--cell);
+      height: var(--cell);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .shape {
+      width: 100px;
+      height: 100px;
+      background: var(--red);
+    }
+
+    .leaf {
+      position: absolute;
+      width: 90px;
+      height: 34px;
+      background: var(--red);
+      corner-shape: squircle;
+    }
+    .leafUphill   { border-radius: 100% 0 100% 0; }
+    .leafDownhill { border-radius: 0 100% 0 100%; }
+
+    .cell.block {
+      display: grid;
+      grid-template-columns: repeat(2, 50px);
+      grid-template-rows: repeat(2, 50px);
+      gap: 4px;
+      place-content: center;
+    }
+    .block > span {
+      width: 50px;
+      height: 50px;
+      background: var(--red);
+    }
+
+    .tulip .sparkle {
+      position: absolute;
+      width: 50px;
+      height: 50px;
+      background: var(--red);
+      border-radius: 50%;
+      corner-shape: scoop;
+      transform: translateY(-38px);
+    }
+    .tulip .twinkle {
+      position: absolute;
+      width: 50px;
+      height: 50px;
+      background: var(--bg);
+      border-radius: 50%;
+      corner-shape: scoop;
+      transform: translateY(-38px) scale(0);
+    }
+    .tulip .leaf {
+      width: 50px;
+      height: 30px;
+      corner-shape: superellipse(1.5);
+    }
+    .tulip .leafDownhill { transform: translate(-20px, 10px) rotate(12deg); }
+    .tulip .leafUphill   { transform: translate(20px, 10px) rotate(-12deg); }
+
+    .pinwheel .leaf {
+      width: 52px;
+      height: 52px;
+      corner-shape: superellipse(1.5);
+    }
+    .pinwheel .petalTopLeft     { transform: translate(-26px, -26px); }
+    .pinwheel .petalTopRight    { transform: translate(26px, -26px); }
+    .pinwheel .petalBottomLeft  { transform: translate(-26px, 26px); }
+    .pinwheel .petalBottomRight { transform: translate(26px, 26px); }
+
+    .quadOuter .topLeft     { border-radius: 100% 0 0 0; }
+    .quadOuter .topRight    { border-radius: 0 100% 0 0; }
+    .quadOuter .bottomRight { border-radius: 0 0 100% 0; }
+    .quadOuter .bottomLeft  { border-radius: 0 0 0 100%; }
+    .quadOuter > span { corner-shape: squircle; }
+
+    .quadInner .topLeft,
+    .quadInner .bottomRight { border-radius: 40% 0 34% 0; }
+    .quadInner .topRight,
+    .quadInner .bottomLeft  { border-radius: 0 40% 0 34%; }
+    .quadInner > span { corner-shape: superellipse(1.5); }
+
+    .cell.starQuad {
+      grid-template-columns: repeat(2, 52px);
+      grid-template-rows: repeat(2, 52px);
+      gap: 0;
+    }
+    .starQuad > span {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      corner-shape: scoop;
+    }
+
+    .daisy .leaf {
+      width: 104px;
+      height: 26px;
+      corner-shape: superellipse(0.75);
+    }
+    .daisy .leaf:nth-child(1) { transform: rotate(0deg); }
+    .daisy .leaf:nth-child(2) { transform: rotate(36deg); }
+    .daisy .leaf:nth-child(3) { transform: rotate(72deg); }
+    .daisy .leaf:nth-child(4) { transform: rotate(108deg); }
+    .daisy .leaf:nth-child(5) { transform: rotate(144deg); }
+
+    .clover .lobe {
+      position: absolute;
+      width: 50px;
+      height: 50px;
+      background: var(--red);
+      border-radius: 50% 50% 50% 0;
+      corner-shape: superellipse(1.1);
+    }
+    .clover .topLeft     { top: 6px;    left: 6px;   transform: rotate(-90deg); }
+    .clover .topRight    { top: 6px;    right: 6px;  }
+    .clover .bottomRight { bottom: 6px; right: 6px;  transform: rotate(90deg); }
+    .clover .bottomLeft  { bottom: 6px; left: 6px;   transform: rotate(180deg); }
+
+    .ring .disc {
+      position: absolute;
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      corner-shape: superellipse(1.15);
+      background:
+        linear-gradient(var(--bg), var(--bg)) center / 5px 100% no-repeat,
+        linear-gradient(var(--bg), var(--bg)) center / 100% 5px no-repeat,
+        var(--red);
+    }
+    .ring .hole {
+      position: absolute;
+      width: 44px;
+      height: 44px;
+      background: var(--bg);
+      border-radius: 50%;
+      corner-shape: superellipse(1.15);
+    }
+
+    .starSharp .shape {
+      width: 104px;
+      height: 104px;
+      border-radius: 50%;
+      corner-shape: scoop;
+    }
+    .starSharp .cutout {
+      position: absolute;
+      width: 50px;
+      height: 50px;
+      background: var(--bg);
+      border-radius: 50%;
+      corner-shape: scoop;
+    }
+
+    .finQuad .topLeft {
+      border-radius: 46% 0 50% 0;
+      corner-shape: squircle square scoop square;
+    }
+    .finQuad .topRight {
+      border-radius: 0 46% 0 50%;
+      corner-shape: square squircle square scoop;
+    }
+    .finQuad .bottomRight {
+      border-radius: 50% 0 46% 0;
+      corner-shape: scoop square squircle square;
+    }
+    .finQuad .bottomLeft {
+      border-radius: 0 50% 0 46%;
+      corner-shape: square scoop square squircle;
+    }
+
+    .house .shape {
+      width: 96px;
+      height: 96px;
+      border-top-left-radius: 48px;
+      border-top-right-radius: 48px;
+      corner-shape: bevel bevel square square;
+    }
+    .house .door {
+      position: absolute;
+      width: 38px;
+      height: 42px;
+      background: var(--bg);
+      border-radius: 50% 50% 0 0;
+      corner-shape: superellipse(1.4);
+      bottom: 12px;
+    }
+
+    .lips .shape {
+      width: 106px;
+      height: 84px;
+      border-radius: 50%;
+      corner-shape: bevel;
+    }
+    .lips .bite {
+      position: absolute;
+      width: 54px;
+      height: 54px;
+      background: var(--bg);
+      border-radius: 50%;
+      corner-shape: superellipse(1.25);
+    }
+    .lips .biteTop    { transform: translateY(-44px); }
+    .lips .biteBottom { transform: translateY(44px); }
+
+    .cell {
+      transition: transform 500ms ease-in-out;
+    }
+    .cell:hover {
+      transform: scale(1.05);
+    }
+    .cell span {
+      transition:
+        corner-top-left-shape 500ms ease-in-out,
+        corner-top-right-shape 500ms ease-in-out,
+        corner-bottom-right-shape 500ms ease-in-out,
+        corner-bottom-left-shape 500ms ease-in-out,
+        border-radius 500ms ease-in-out,
+        transform 500ms ease-in-out;
+    }
+
+    .tulip:hover .twinkle {
+      transform: translateY(-38px) scale(0.55);
+    }
+
+    .pinwheel:hover .leaf { corner-shape: bevel; }
+
+    .quadOuter:hover > span { corner-shape: scoop; }
+
+    .quadInner:hover > span { corner-shape: notch; }
+
+    .starQuad:hover > span { corner-shape: squircle; }
+
+    .daisy:hover .leaf { corner-shape: square; }
+
+    .clover:hover .lobe { corner-shape: superellipse(-0.4); }
+
+    .ring:hover .disc,
+    .ring:hover .hole { corner-shape: bevel; }
+
+    .starSharp:hover .shape  { corner-shape: squircle; }
+    .starSharp:hover .cutout { corner-shape: bevel; }
+
+    .finQuad:hover .topLeft     { corner-shape: scoop square squircle square; }
+    .finQuad:hover .topRight    { corner-shape: square scoop square squircle; }
+    .finQuad:hover .bottomRight { corner-shape: squircle square scoop square; }
+    .finQuad:hover .bottomLeft  { corner-shape: square squircle square scoop; }
+
+    .house:hover .shape { corner-shape: superellipse(1.6) superellipse(1.6) square square; }
+    .house:hover .door  { corner-shape: bevel; }
+
+    .lips:hover .shape { corner-shape: squircle; }
+    .lips:hover .bite  { corner-shape: bevel; }
+    }
+  </style>
+</head>
+<body>
+<div class="bg-canvas"></div>
+
+<div class="page">
+  <div class="hero">
+    <div class="eyebrow">CSS Borders Level 4</div>
+    <h1>corner&#8209;shape</h1>
+    <div class="screen-toggle">
+      <button class="view-btn active" id="btnScreenPlayground" onclick="setScreen('playground')">Playground</button>
+      <button class="view-btn" id="btnScreenDesigns" onclick="setScreen('designs')">Designs</button>
+    </div>
+  </div>
+
+  <div class="main-grid" id="playgroundScreen">
+    <div class="left-col">
+      <div class="glass stage-wrap">
+        <div class="stage">
+          <div class="view-toggle">
+            <button class="view-btn active" id="btnFill" onclick="setViewMode('fill')">Fill</button>
+            <button class="view-btn" id="btnBorder" onclick="setViewMode('border')">Border</button>
+            <button class="view-btn" id="btnShadow" onclick="setViewMode('shadow')">Shadow</button>
+            <button class="view-btn" id="btnOutline" onclick="setViewMode('outline')">Outline</button>
+          </div>
+          <div id="demoShape"></div>
+        </div>
+      </div>
+      <textarea class="code-panel code-panel-bg" id="codePanel" spellcheck="false" oninput="parseCSS(this.value)"></textarea>
+    </div>
+
+    <div class="panel">
+
+      <div class="card glass">
+        <div class="card-title">Presets</div>
+        <div class="preset-grid" id="presetGrid"></div>
+      </div>
+
+      <div class="card glass">
+        <div class="section-head">
+          <div class="card-title">Per-corner shape</div>
+          <button class="link-btn active" id="linkShapeBtn" onclick="toggleLink('shape')"><span class="dot"></span>All corners</button>
+        </div>
+        <div class="corner-outer">
+          <div class="corner-sel tl"><label>↖ tl</label><select id="tl" onchange="onCorner('tl')"></select></div>
+          <div class="corner-sel tr"><label>tr ↗</label><select id="tr" onchange="onCorner('tr')"></select></div>
+          <div class="corner-sel bl"><label>↙ bl</label><select id="bl" onchange="onCorner('bl')"></select></div>
+          <div class="corner-sel br"><label>br ↘</label><select id="br" onchange="onCorner('br')"></select></div>
+        </div>
+
+        <div class="curve-section">
+          <div class="corner-curve-grid">
+            <div class="corner-curve-row hidden" id="curveTLrow">
+              <label id="curveTLlabel">↖ tl n</label>
+              <div class="corner-curve-inner"><input type="range" id="curveTL" min="-2" max="6" value="1" step="0.05" oninput="onCurveCorner('tl')"><span class="cv" id="curveTLv"></span></div>
+            </div>
+            <div class="corner-curve-row hidden" id="curveTRrow">
+              <label>tr ↗ n</label>
+              <div class="corner-curve-inner"><input type="range" id="curveTR" min="-2" max="6" value="1" step="0.05" oninput="onCurveCorner('tr')"><span class="cv" id="curveTRv"></span></div>
+            </div>
+            <div class="corner-curve-row hidden" id="curveBLrow">
+              <label>↙ bl n</label>
+              <div class="corner-curve-inner"><input type="range" id="curveBL" min="-2" max="6" value="1" step="0.05" oninput="onCurveCorner('bl')"><span class="cv" id="curveBLv"></span></div>
+            </div>
+            <div class="corner-curve-row hidden" id="curveBRrow">
+              <label>br ↘ n</label>
+              <div class="corner-curve-inner"><input type="range" id="curveBR" min="-2" max="6" value="1" step="0.05" oninput="onCurveCorner('br')"><span class="cv" id="curveBRv"></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card glass">
+        <div class="card-title">Dimensions</div>
+        <div class="slider-row">
+          <div class="slider-label">width <span class="badge" id="wVal"></span></div>
+          <input type="range" id="sWidth" min="60" max="300" value="160" step="2" oninput="onSlider()">
+        </div>
+        <div class="slider-row">
+          <div class="slider-label">height <span class="badge" id="hVal"></span></div>
+          <input type="range" id="sHeight" min="40" max="220" value="64" step="2" oninput="onSlider()">
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;margin-top:14px;padding-top:14px;border-top:1px solid rgba(0,0,0,0.07)">
+          <span style="font-size:0.67rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--label)">Border radius</span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <button class="link-btn active" id="linkRadiusBtn" onclick="toggleLink('radius')"><span class="dot"></span>All</button>
+            <div class="view-toggle" style="position:static">
+              <button class="view-btn active" id="rUnitPx" onclick="setRadiusUnit('px')">px</button>
+              <button class="view-btn" id="rUnitPct" onclick="setRadiusUnit('%')">%</button>
+            </div>
+          </div>
+        </div>
+        <div class="radius-grid">
+          <div class="radius-cell">
+            <label>↖ top-left</label>
+            <div class="radius-cell-inner"><input type="range" id="rTL" min="0" max="120" value="28" oninput="onRadii('rtl')"><span class="rv" id="rTLv"></span></div>
+          </div>
+          <div class="radius-cell">
+            <label>top-right ↗</label>
+            <div class="radius-cell-inner"><input type="range" id="rTR" min="0" max="120" value="28" oninput="onRadii('rtr')"><span class="rv" id="rTRv"></span></div>
+          </div>
+          <div class="radius-cell">
+            <label>↙ btm-left</label>
+            <div class="radius-cell-inner"><input type="range" id="rBL" min="0" max="120" value="28" oninput="onRadii('rbl')"><span class="rv" id="rBLv"></span></div>
+          </div>
+          <div class="radius-cell">
+            <label>btm-right ↘</label>
+            <div class="radius-cell-inner"><input type="range" id="rBR" min="0" max="120" value="28" oninput="onRadii('rbr')"><span class="rv" id="rBRv"></span></div>
+          </div>
+        </div>
+
+        <div class="radius-grid" style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(0,0,0,0.07)">
+          <div class="radius-cell" style="grid-column:1/-1">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+              <label style="font-size:0.67rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--label)">Border width</label>
+              <button class="link-btn active" id="linkBorderBtn" onclick="toggleLink('border')"><span class="dot"></span>All</button>
+            </div>
+          </div>
+          <div class="radius-cell">
+            <label>↑ top</label>
+            <div class="radius-cell-inner"><input type="range" id="bTop" min="0" max="40" value="0" oninput="onBorder('bTop')"><span class="rv" id="bTopv">0px</span></div>
+          </div>
+          <div class="radius-cell">
+            <label>→ right</label>
+            <div class="radius-cell-inner"><input type="range" id="bRight" min="0" max="40" value="0" oninput="onBorder('bRight')"><span class="rv" id="bRightv">0px</span></div>
+          </div>
+          <div class="radius-cell">
+            <label>↓ bottom</label>
+            <div class="radius-cell-inner"><input type="range" id="bBottom" min="0" max="40" value="0" oninput="onBorder('bBottom')"><span class="rv" id="bBottomv">0px</span></div>
+          </div>
+          <div class="radius-cell">
+            <label>← left</label>
+            <div class="radius-cell-inner"><input type="range" id="bLeft" min="0" max="40" value="0" oninput="onBorder('bLeft')"><span class="rv" id="bLeftv">0px</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card glass" id="outsetCard" style="display:none">
+        <div class="card-title" id="outsetTitle">Outset</div>
+        <div class="slider-row" id="blurRow">
+          <div class="slider-label">blur radius <span class="badge" id="blurVal"></span></div>
+          <input type="range" id="sBlur" min="0" max="80" value="30" oninput="onOutset()">
+        </div>
+        <div class="slider-row" id="spreadRow">
+          <div class="slider-label">spread radius <span class="badge" id="spreadVal"></span></div>
+          <input type="range" id="sSpread" min="0" max="60" value="8" oninput="onOutset()">
+        </div>
+        <div class="slider-row" id="outlineWidthRow">
+          <div class="slider-label">outline-width <span class="badge" id="outlineWidthVal"></span></div>
+          <input type="range" id="sOutlineWidth" min="1" max="24" value="4" oninput="onOutset()">
+        </div>
+        <div class="slider-row" id="outlineOffsetRow">
+          <div class="slider-label">outline-offset <span class="badge" id="outlineOffsetVal"></span></div>
+          <input type="range" id="sOutlineOffset" min="-20" max="60" value="14" oninput="onOutset()">
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="designsScreen" hidden>
+    <div class="designs-card">
+      <div class="designs-head">
+        <div class="card-title">Shape combinations</div>
+      </div>
+      <div class="grid">
+          <div class="cell tulip">
+            <span class="sparkle"></span><span class="twinkle"></span>
+            <span class="leaf leafDownhill"></span><span class="leaf leafUphill"></span>
+          </div>
+          <div class="cell pinwheel">
+            <span class="leaf leafDownhill petalTopLeft"></span>
+            <span class="leaf leafUphill petalTopRight"></span>
+            <span class="leaf leafUphill petalBottomLeft"></span>
+            <span class="leaf leafDownhill petalBottomRight"></span>
+          </div>
+          <div class="cell block quadOuter">
+            <span class="topLeft"></span><span class="topRight"></span>
+            <span class="bottomLeft"></span><span class="bottomRight"></span>
+          </div>
+          <div class="cell block quadInner">
+            <span class="topLeft"></span><span class="topRight"></span>
+            <span class="bottomLeft"></span><span class="bottomRight"></span>
+          </div>
+          <div class="cell block starQuad">
+            <span></span><span></span><span></span><span></span>
+          </div>
+          <div class="cell daisy">
+            <span class="leaf leafUphill"></span><span class="leaf leafUphill"></span>
+            <span class="leaf leafUphill"></span><span class="leaf leafUphill"></span>
+            <span class="leaf leafUphill"></span>
+          </div>
+
+          <div class="cell clover">
+            <span class="lobe topLeft"></span><span class="lobe topRight"></span>
+            <span class="lobe bottomRight"></span><span class="lobe bottomLeft"></span>
+          </div>
+          <div class="cell ring"><span class="disc"></span><span class="hole"></span></div>
+          <div class="cell starSharp"><span class="shape"></span><span class="cutout"></span></div>
+          <div class="cell block finQuad">
+            <span class="topLeft"></span><span class="topRight"></span>
+            <span class="bottomLeft"></span><span class="bottomRight"></span>
+          </div>
+          <div class="cell house"><span class="shape"></span><span class="door"></span></div>
+          <div class="cell lips">
+            <span class="shape"></span>
+            <span class="bite biteTop"></span><span class="bite biteBottom"></span>
+          </div>
+        </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const shapeOptions = ['round','squircle','bevel','notch','scoop','square','superellipse'];
+
+const PRESETS = [
+  { label:'Button',    tl:'round',    tr:'round',    bl:'round',    br:'round',    rtl:28,  rtr:28,  rbl:28,  rbr:28,  w:160, h:60,  color:'#594C80' },
+  { label:'iOS',       tl:'superellipse(1.5)', tr:'superellipse(1.5)', bl:'superellipse(1.5)', br:'superellipse(1.5)', curveTL:1.5, curveTR:1.5, curveBL:1.5, curveBR:1.5, rtl:35, rtr:35, rbl:35, rbr:35, radiusUnit:'%', w:100, h:100, color:'#4782A6' },
+  { label:'Triangle',  tl:'bevel',    tr:'bevel',    bl:'bevel',    br:'bevel',    rtl:0,   rtr:28,  rbl:0,   rbr:28,  w:104, h:120, color:'#8071AB', customRadius:'0 100% 100% 0 / 50%' },
+  { label:'3D box',    tl:'bevel',    tr:'bevel',    bl:'bevel',    br:'bevel',    rtl:0,   rtr:0,   rbl:0,   rbr:0,   w:160, h:160, color:'#4782A6', customRadius:'0 30px', customStyle:{ borderRight:'30px solid rgba(0,0,0,0.27)', borderBottom:'30px solid rgba(0,0,0,0.5)', boxSizing:'border-box' } },
+  { label:'Octagon',   tl:'bevel',    tr:'bevel',    bl:'bevel',    br:'bevel',    rtl:28,  rtr:28,  rbl:28,  rbr:28,  w:100, h:100, color:'#8071AB', customRadius:'calc(100% / (2 + sqrt(2)))' },
+  { label:'Arrow',     tl:'notch',    tr:'bevel',    bl:'notch',    br:'bevel',    rtl:28,  rtr:28,  rbl:28,  rbr:28,  w:160, h:80,  color:'#FA975C', customRadius:'60% 40% 40% 60% / 25% 50% 50% 25%' },
+  { label:'Shield',    tl:'squircle', tr:'squircle', bl:'bevel',    br:'bevel',    rtl:44,  rtr:44,  rbl:44,  rbr:44,  w:96,  h:120, color:'#594C80' },
+  { label:'Wave',      tl:'round',    tr:'scoop',    bl:'scoop',    br:'round',    rtl:44,  rtr:44,  rbl:44,  rbr:44,  w:180, h:80,  color:'#8071AB' },
+  { label:'Chat',      tl:'squircle', tr:'squircle', bl:'notch',    br:'squircle', rtl:24,  rtr:24,  rbl:0,   rbr:24,  w:160, h:80,  color:'#376380' },
+  { label:'Scoop',     tl:'scoop',    tr:'scoop',    bl:'scoop',    br:'scoop',    rtl:40,  rtr:40,  rbl:40,  rbr:40,  w:160, h:80,  color:'#FA975C' },
+  { label:'Leaf',      tl:'notch',    tr:'round',    bl:'round',    br:'notch',    rtl:48,  rtr:48,  rbl:48,  rbr:48,  w:110, h:110, color:'#3A8C52' },
+  { label:'Diamond',   tl:'bevel',    tr:'bevel',    bl:'bevel',    br:'bevel',    rtl:64,  rtr:64,  rbl:64,  rbr:64,  w:100, h:100, color:'#E35E69' },
+];
+
+let state = { ...PRESETS[0], outline: false, viewMode: 'fill', curveTL: 1, curveTR: 1, curveBL: 1, curveBR: 1, bTop:0, bRight:0, bBottom:0, bLeft:0, radiusUnit: 'px',
+  linkShape: true, linkRadius: true, linkBorder: true,
+  blur: 30, spread: 8, outlineWidth: 4, outlineOffset: 14 };
+
+const CORNER_IDS = ['tl','tr','bl','br'];
+const RADIUS_KEYS = { rtl:'rTL', rtr:'rTR', rbl:'rBL', rbr:'rBR' };
+const BORDER_KEYS = ['bTop','bRight','bBottom','bLeft'];
+
+['tl','tr','bl','br'].forEach(id => {
+  const sel = document.getElementById(id);
+  shapeOptions.forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s; opt.textContent = s;
+    sel.appendChild(opt);
+  });
+});
+
+function presetThumb(preset, boxWidth = 36, boxHeight = 24) {
+  const scale = Math.min(boxWidth / preset.w, boxHeight / preset.h);
+  const scalePx = value => String(value).replace(/(-?[\d.]+)px/g, (_, number) => `${(+number * scale).toFixed(3)}px`);
+
+  const slot = document.createElement('span');
+  slot.className = 'preset-thumb';
+
+  const shape = document.createElement('span');
+  shape.className = 'preset-thumb-shape';
+  shape.style.width = (preset.w * scale).toFixed(2) + 'px';
+  shape.style.height = (preset.h * scale).toFixed(2) + 'px';
+  shape.style.background = preset.color;
+
+  const unit = preset.radiusUnit ?? 'px';
+  shape.style.borderRadius = preset.customRadius
+    ? scalePx(preset.customRadius)
+    : unit === '%'
+      ? `${preset.rtl}% ${preset.rtr}% ${preset.rbr}% ${preset.rbl}%`
+      : `${preset.rtl * scale}px ${preset.rtr * scale}px ${preset.rbr * scale}px ${preset.rbl * scale}px`;
+  shape.style.setProperty('corner-top-left-shape', preset.tl);
+  shape.style.setProperty('corner-top-right-shape', preset.tr);
+  shape.style.setProperty('corner-bottom-left-shape', preset.bl);
+  shape.style.setProperty('corner-bottom-right-shape', preset.br);
+
+  if (preset.customStyle) {
+    for (const [property, value] of Object.entries(preset.customStyle))
+      shape.style[property] = typeof value === 'string' ? scalePx(value) : value;
+  }
+
+  slot.appendChild(shape);
+  return slot;
+}
+
+const presetGrid = document.getElementById('presetGrid');
+PRESETS.forEach((p, i) => {
+  const btn = document.createElement('button');
+  btn.className = 'preset-btn' + (i === 0 ? ' active' : '');
+  btn.dataset.idx = i;
+  btn.appendChild(presetThumb(p));
+  const lbl = document.createElement('span'); lbl.textContent = p.label; btn.appendChild(lbl);
+  btn.addEventListener('click', () => {
+    const cornersMatch = p.tl === p.tr && p.tr === p.bl && p.bl === p.br;
+    const radiiMatch = p.rtl === p.rtr && p.rtr === p.rbl && p.rbl === p.rbr;
+    state = { ...p, outline: state.outline, viewMode: state.viewMode,
+      curveTL: p.curveTL ?? 1, curveTR: p.curveTR ?? 1,
+      curveBL: p.curveBL ?? 1, curveBR: p.curveBR ?? 1,
+      bTop: 0, bRight: 0, bBottom: 0, bLeft: 0,
+      radiusUnit: p.radiusUnit ?? state.radiusUnit,
+      linkShape: cornersMatch, linkRadius: radiiMatch, linkBorder: state.linkBorder,
+      blur: state.blur, spread: state.spread,
+      outlineWidth: state.outlineWidth, outlineOffset: state.outlineOffset };
+    applyRadiusUnitChrome(p.radiusUnit ?? state.radiusUnit);
+    syncUI(); setActivePreset(i); render(true);
+  });
+  presetGrid.appendChild(btn);
+});
+
+function setActivePreset(idx) {
+  presetGrid.querySelectorAll('.preset-btn').forEach((b,i) => b.classList.toggle('active', i === idx));
+}
+
+function setViewMode(mode) {
+  state.viewMode = mode;
+  state.outline = mode === 'border';
+  [['fill','btnFill'],['border','btnBorder'],['shadow','btnShadow'],['outline','btnOutline']].forEach(([key, buttonId]) => {
+    document.getElementById(buttonId).classList.toggle('active', mode === key);
+  });
+  const isShadow = mode === 'shadow', isOutline = mode === 'outline';
+  document.getElementById('outsetCard').style.display = (isShadow || isOutline) ? '' : 'none';
+  document.getElementById('outsetTitle').textContent = isShadow ? 'Box-shadow' : 'Outline';
+  document.getElementById('blurRow').style.display = isShadow ? '' : 'none';
+  document.getElementById('spreadRow').style.display = isShadow ? '' : 'none';
+  document.getElementById('outlineWidthRow').style.display = isOutline ? '' : 'none';
+  document.getElementById('outlineOffsetRow').style.display = isOutline ? '' : 'none';
+  render(true);
+}
+
+function onOutset() {
+  state.blur = +document.getElementById('sBlur').value;
+  state.spread = +document.getElementById('sSpread').value;
+  state.outlineWidth = +document.getElementById('sOutlineWidth').value;
+  state.outlineOffset = +document.getElementById('sOutlineOffset').value;
+  render();
+}
+
+function toggleLink(section) {
+  const stateKey = section === 'shape' ? 'linkShape' : section === 'radius' ? 'linkRadius' : 'linkBorder';
+  const buttonId = section === 'shape' ? 'linkShapeBtn' : section === 'radius' ? 'linkRadiusBtn' : 'linkBorderBtn';
+  state[stateKey] = !state[stateKey];
+  document.getElementById(buttonId).classList.toggle('active', state[stateKey]);
+
+  if (state[stateKey]) {
+    if (section === 'shape') applyShapeToAll('tl');
+    else if (section === 'radius') applyRadiusToAll('rtl');
+    else applyBorderToAll('bTop');
+  }
+  updateCurveRows();
+  setActivePreset(-1); render(true);
+}
+
+function applyShapeToAll(sourceId) {
+  const shape = document.getElementById(sourceId).value;
+  const curvature = state['curve' + sourceId.toUpperCase()];
+  CORNER_IDS.forEach(id => {
+    document.getElementById(id).value = shape;
+    state['curve' + id.toUpperCase()] = curvature;
+    document.getElementById('curve' + id.toUpperCase()).value = curvature;
+    document.getElementById('curve' + id.toUpperCase() + 'v').textContent = curvature.toFixed(2);
+    state[id] = shape === 'superellipse' ? `superellipse(${curvature.toFixed(2)})` : shape;
+  });
+}
+
+function applyRadiusToAll(sourceKey) {
+  const value = state[sourceKey];
+  Object.entries(RADIUS_KEYS).forEach(([key, elementId]) => {
+    state[key] = value;
+    document.getElementById(elementId).value = value;
+  });
+}
+
+function applyBorderToAll(sourceKey) {
+  const value = state[sourceKey];
+  BORDER_KEYS.forEach(key => {
+    state[key] = value;
+    document.getElementById(key).value = value;
+  });
+}
+
+function updateCurveRows() {
+  CORNER_IDS.forEach(id => {
+    const upper = id.toUpperCase();
+    const isSuperellipse = (state[id] || '').startsWith('superellipse');
+    const visible = isSuperellipse && (!state.linkShape || id === 'tl');
+    document.getElementById('curve' + upper + 'row').classList.toggle('hidden', !visible);
+  });
+  const topLeftLabel = document.getElementById('curveTLlabel');
+  if (topLeftLabel) topLeftLabel.textContent = state.linkShape ? 'all corners  n' : '↖ tl n';
+}
+
+function onCorner(changedId) {
+  if (state.linkShape && changedId) {
+    applyShapeToAll(changedId);
+  } else {
+    CORNER_IDS.forEach(id => {
+      const value = document.getElementById(id).value;
+      state[id] = value === 'superellipse'
+        ? `superellipse(${state['curve' + id.toUpperCase()].toFixed(2)})`
+        : value;
+    });
+  }
+  updateCurveRows();
+  setActivePreset(-1); render(true);
+}
+
+function onCurveCorner(id) {
+  const curvature = parseFloat(document.getElementById('curve' + id.toUpperCase()).value);
+  const targets = state.linkShape ? CORNER_IDS : [id];
+  targets.forEach(target => {
+    const upper = target.toUpperCase();
+    state['curve' + upper] = curvature;
+    state[target] = `superellipse(${curvature.toFixed(2)})`;
+    document.getElementById(target).value = 'superellipse';
+    document.getElementById('curve' + upper).value = curvature;
+    document.getElementById('curve' + upper + 'v').textContent = curvature.toFixed(2);
+  });
+  updateCurveRows();
+  setActivePreset(-1); render();
+}
+
+function applyRadiusUnitChrome(unit) {
+  state.radiusUnit = unit;
+  const isPct = unit === '%';
+  document.getElementById('rUnitPx').classList.toggle('active', !isPct);
+  document.getElementById('rUnitPct').classList.toggle('active', isPct);
+  for (const id of ['rTL','rTR','rBL','rBR']) {
+    const el = document.getElementById(id);
+    el.max  = isPct ? 100 : 120;
+    el.step = 1;
+  }
+}
+
+function setRadiusUnit(unit) {
+  const isPct = unit === '%';
+  applyRadiusUnitChrome(unit);
+  const ids = ['rTL','rTR','rBL','rBR'];
+  const keys = ['rtl','rtr','rbl','rbr'];
+  ids.forEach((id, i) => {
+    const converted = isPct ? Math.round(state[keys[i]] / 1.2) : Math.round(state[keys[i]] * 1.2);
+    document.getElementById(id).value = converted;
+    state[keys[i]] = converted;
+  });
+  state.customRadius = null;
+  setActivePreset(-1); render();
+}
+
+function onBorder(changedKey) {
+  BORDER_KEYS.forEach(key => { state[key] = +document.getElementById(key).value; });
+  if (state.linkBorder && changedKey) applyBorderToAll(changedKey);
+  setActivePreset(-1); render();
+}
+
+function onSlider() {
+  state.w = +document.getElementById('sWidth').value;
+  state.h = +document.getElementById('sHeight').value;
+  setActivePreset(-1); render();
+}
+
+function onRadii(changedKey) {
+  Object.entries(RADIUS_KEYS).forEach(([key, elementId]) => { state[key] = +document.getElementById(elementId).value; });
+  if (state.linkRadius && changedKey) applyRadiusToAll(changedKey);
+  state.transform = null;
+  state.customRadius = null;  setActivePreset(-1); render();
+}
+
+function syncUI() {
+  document.getElementById('sWidth').value  = state.w;
+  document.getElementById('sHeight').value = state.h;
+  document.getElementById('rTL').value = state.rtl;
+  document.getElementById('rTR').value = state.rtr;
+  document.getElementById('rBL').value = state.rbl;
+  document.getElementById('rBR').value = state.rbr;
+  document.getElementById('bTop').value    = state.bTop    || 0;
+  document.getElementById('bRight').value  = state.bRight  || 0;
+  document.getElementById('bBottom').value = state.bBottom || 0;
+  document.getElementById('bLeft').value   = state.bLeft   || 0;
+  ['tl','tr','bl','br'].forEach(id => {
+    const isSE = state[id] && state[id].startsWith('superellipse');
+    document.getElementById(id).value = isSE ? 'superellipse' : (shapeOptions.includes(state[id]) ? state[id] : 'round');
+    const n = state['curve'+id.toUpperCase()] ?? 1;
+    document.getElementById('curve'+id.toUpperCase()).value = n;
+    document.getElementById('curve'+id.toUpperCase()+'v').textContent = n.toFixed(2);
+  });
+  document.getElementById('sBlur').value          = state.blur ?? 30;
+  document.getElementById('sSpread').value        = state.spread ?? 8;
+  document.getElementById('sOutlineWidth').value  = state.outlineWidth ?? 4;
+  document.getElementById('sOutlineOffset').value = state.outlineOffset ?? 14;
+  document.getElementById('linkShapeBtn').classList.toggle('active', state.linkShape);
+  document.getElementById('linkRadiusBtn').classList.toggle('active', state.linkRadius);
+  document.getElementById('linkBorderBtn').classList.toggle('active', state.linkBorder);
+  updateCurveRows();
+}
+
+function darken(hexColor, amount) {
+  if (!/^#[0-9a-f]{6}$/i.test(hexColor)) return hexColor;
+  const packed = parseInt(hexColor.slice(1), 16);
+  const channels = [(packed >> 16) & 255, (packed >> 8) & 255, packed & 255];
+  return '#' + channels
+    .map(channel => Math.round(channel * (1 - amount)).toString(16).padStart(2, '0'))
+    .join('');
+}
+
+function render(animate = false) {
+  const el = document.getElementById('demoShape');
+  el.style.width  = state.w + 'px';
+  el.style.height = state.h + 'px';
+  el.style.transform = state.transform || '';
+  const u = state.radiusUnit || 'px';
+  el.style.borderRadius = state.customRadius || `${state.rtl}${u} ${state.rtr}${u} ${state.rbr}${u} ${state.rbl}${u}`;
+  el.style.setProperty('corner-top-left-shape',     state.tl);
+  el.style.setProperty('corner-top-right-shape',    state.tr);
+  el.style.setProperty('corner-bottom-left-shape',  state.bl);
+  el.style.setProperty('corner-bottom-right-shape', state.br);
+  el.style.setProperty('--corner-tl', state.tl);
+  el.style.setProperty('--corner-tr', state.tr);
+  el.style.setProperty('--corner-bl', state.bl);
+  el.style.setProperty('--corner-br', state.br);
+
+  const mode = state.viewMode || 'fill';
+  const blur = state.blur ?? 30;
+  const spread = state.spread ?? 8;
+  const outlineWidth = state.outlineWidth ?? 4;
+  const outlineOffset = state.outlineOffset ?? 14;
+  state.blur = blur; state.spread = spread;
+  state.outlineWidth = outlineWidth; state.outlineOffset = outlineOffset;
+  const shadowCss = `0 0 ${blur}px ${spread}px rgba(0,0,0,0.35)`;
+  el.style.outline = 'none';
+  el.style.outlineOffset = '0';
+
+  const ringWidth = mode === 'border' ? 3 : 0;
+  const sideWidths = {
+    top:    state.bTop    || ringWidth,
+    right:  state.bRight  || ringWidth,
+    bottom: state.bBottom || ringWidth,
+    left:   state.bLeft   || ringWidth,
+  };
+  const hasSideBorders = state.bTop > 0 || state.bRight > 0 || state.bBottom > 0 || state.bLeft > 0;
+  const borderColor = mode === 'border' ? state.color : darken(state.color, 0.3);
+
+  if (mode === 'border') {
+    el.style.background = 'transparent';
+    el.style.boxShadow = 'none';
+  } else if (mode === 'shadow') {
+    el.style.background = state.color;
+    el.style.boxShadow = shadowCss;
+  } else if (mode === 'outline') {
+    el.style.background = state.color;
+    el.style.boxShadow = 'none';
+    el.style.outline = `${outlineWidth}px solid ${state.color}a6`;
+    el.style.outlineOffset = `${outlineOffset}px`;
+  } else if (!state.customStyle) {
+    el.style.background = state.color;
+    el.style.boxShadow = '0 8px 24px rgba(0,0,0,0.18)';
+  } else {
+    el.style.background = state.color;
+    el.style.boxShadow = 'none';
+  }
+
+  el.style.borderTop    = `${sideWidths.top}px solid ${borderColor}`;
+  el.style.borderRight  = `${sideWidths.right}px solid ${borderColor}`;
+  el.style.borderBottom = `${sideWidths.bottom}px solid ${borderColor}`;
+  el.style.borderLeft   = `${sideWidths.left}px solid ${borderColor}`;
+  el.style.boxSizing = hasSideBorders ? 'border-box' : '';
+  el.classList.toggle('no-gloss', mode === 'border' || hasSideBorders);
+
+  if (state.customStyle) {
+    Object.entries(state.customStyle).forEach(([property, value]) => el.style[property] = value);
+  }
+
+  if (animate) { el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); }
+
+  document.getElementById('wVal').textContent  = state.w + 'px';
+  document.getElementById('hVal').textContent  = state.h + 'px';
+  document.getElementById('rTLv').textContent  = state.rtl + u;
+  document.getElementById('rTRv').textContent  = state.rtr + u;
+  document.getElementById('rBLv').textContent  = state.rbl + u;
+  document.getElementById('rBRv').textContent  = state.rbr + u;
+  document.getElementById('bTopv').textContent    = (state.bTop    || 0) + 'px';
+  document.getElementById('bRightv').textContent  = (state.bRight  || 0) + 'px';
+  document.getElementById('bBottomv').textContent = (state.bBottom || 0) + 'px';
+  document.getElementById('bLeftv').textContent   = (state.bLeft   || 0) + 'px';
+  document.getElementById('blurVal').textContent           = state.blur + 'px';
+  document.getElementById('spreadVal').textContent        = state.spread + 'px';
+  document.getElementById('outlineWidthVal').textContent  = state.outlineWidth + 'px';
+  document.getElementById('outlineOffsetVal').textContent = state.outlineOffset + 'px';
+
+  const tl = state.tl, tr = state.tr, bl = state.bl, br = state.br;
+  const allSame = tl === tr && tr === bl && bl === br;
+  const allSameR = state.rtl === state.rtr && state.rtr === state.rbr && state.rbr === state.rbl;
+  const radiusDisplay = state.customRadius || (allSameR ? state.rtl + u : `${state.rtl}${u} ${state.rtr}${u} ${state.rbr}${u} ${state.rbl}${u}`);
+
+  let css = `.element {\n`;
+  css += `  width: ${state.w}px;\n`;
+  css += `  height: ${state.h}px;\n`;
+  css += `  border-radius: ${radiusDisplay};\n`;
+  if (mode === 'border') {
+    css += `  background: transparent;\n`;
+  } else if (mode === 'shadow') {
+    css += `  box-shadow: ${shadowCss};\n`;
+  } else if (mode === 'outline') {
+    css += `  outline: ${outlineWidth}px solid ${state.color}a6;\n`;
+    css += `  outline-offset: ${outlineOffset}px;\n`;
+  }
+  if (state.transform) css += `  transform: ${state.transform};\n`;
+  if (state.customStyle) {
+    Object.entries(state.customStyle).forEach(([k, v]) => {
+      const prop = k.replace(/([A-Z])/g, m => '-' + m.toLowerCase());
+      css += `  ${prop}: ${v};\n`;
+    });
+  }
+  if (sideWidths.top || sideWidths.right || sideWidths.bottom || sideWidths.left) {
+    const { top, right, bottom, left } = sideWidths;
+    if (top === right && right === bottom && bottom === left) {
+      css += `  border: ${top}px solid ${borderColor};\n`;
+    } else {
+      if (top)    css += `  border-top: ${top}px solid ${borderColor};\n`;
+      if (right)  css += `  border-right: ${right}px solid ${borderColor};\n`;
+      if (bottom) css += `  border-bottom: ${bottom}px solid ${borderColor};\n`;
+      if (left)   css += `  border-left: ${left}px solid ${borderColor};\n`;
+    }
+    if (hasSideBorders) css += `  box-sizing: border-box;\n`;
+  }
+  if (allSame) {
+    css += `  corner-shape: ${tl};\n`;
+  } else {
+    css += `  corner-top-left-shape: ${tl};\n`;
+    css += `  corner-top-right-shape: ${tr};\n`;
+    css += `  corner-bottom-left-shape: ${bl};\n`;
+    css += `  corner-bottom-right-shape: ${br};\n`;
+  }
+  css += `}`;
+
+  const panel = document.getElementById('codePanel');
+  if (document.activeElement !== panel) panel.value = css;
+}
+
+let _parseTimer = null;
+function parseCSS(text) {
+  clearTimeout(_parseTimer);
+  _parseTimer = setTimeout(() => {
+    const pairs = text.match(/[\w-]+\s*:[^;{}]+/g) || [];
+    pairs.forEach(pair => {
+      const colon = pair.indexOf(':');
+      const prop = pair.slice(0, colon).trim();
+      const val  = pair.slice(colon + 1).trim();
+      switch (prop) {
+        case 'width':  { const n = parseFloat(val); if (!isNaN(n)) { state.w = n; document.getElementById('sWidth').value = n; } break; }
+        case 'height': { const n = parseFloat(val); if (!isNaN(n)) { state.h = n; document.getElementById('sHeight').value = n; } break; }
+        case 'border-radius': state.customRadius = val; break;
+        case 'corner-shape': {
+          const parts = val.trim().split(/\s+/);
+          const [a, b, c, d] = parts;
+          setCorner('tl', a); setCorner('tr', b || a); setCorner('br', c || a); setCorner('bl', d || b || a);
+          break;
+        }
+        case 'corner-top-left-shape':     setCorner('tl', val); break;
+        case 'corner-top-right-shape':    setCorner('tr', val); break;
+        case 'corner-bottom-right-shape': setCorner('br', val); break;
+        case 'corner-bottom-left-shape':  setCorner('bl', val); break;
+        case 'border-top':    { const n = parseFloat(val); if (!isNaN(n)) { state.bTop    = n; document.getElementById('bTop').value    = n; } break; }
+        case 'border-right':  { const n = parseFloat(val); if (!isNaN(n)) { state.bRight  = n; document.getElementById('bRight').value  = n; } break; }
+        case 'border-bottom': { const n = parseFloat(val); if (!isNaN(n)) { state.bBottom = n; document.getElementById('bBottom').value = n; } break; }
+        case 'border-left':   { const n = parseFloat(val); if (!isNaN(n)) { state.bLeft   = n; document.getElementById('bLeft').value   = n; } break; }
+      }
+    });
+    syncUI(); setActivePreset(-1); render();
+  }, 120);
+}
+
+function setCorner(id, val) {
+  if (!val) return;
+  state[id] = val;
+  if (val.startsWith('superellipse(')) {
+    const n = parseFloat(val.slice(13));
+    if (!isNaN(n)) state['curve' + id.toUpperCase()] = n;
+  }
+}
+
+function setScreen(name) {
+  const isDesigns = name === 'designs';
+  document.getElementById('playgroundScreen').hidden = isDesigns;
+  document.getElementById('designsScreen').hidden = !isDesigns;
+  document.getElementById('btnScreenPlayground').classList.toggle('active', !isDesigns);
+  document.getElementById('btnScreenDesigns').classList.toggle('active', isDesigns);
+}
+
+syncUI(); setViewMode('fill'); render(true);
+</script>
+</body>
+</html>
