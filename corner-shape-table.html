@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>corner-shape variants</title>
+<style>
+    :root {
+        color-scheme: dark;
+        --page-background: #1b1b1b;
+        --text: #e8e8e8;
+        --grid-line: #6d6d6d;
+    }
+
+    body {
+        margin: 0;
+        padding: 40px;
+        background: var(--page-background);
+        color: var(--text);
+        font: 17px/1.4 -apple-system, "Helvetica Neue", sans-serif;
+    }
+
+    table {
+        border-collapse: collapse;
+        border: 1px solid var(--grid-line);
+    }
+
+    th, td {
+        border: 1px solid var(--grid-line);
+        padding: 8px 14px;
+        text-align: left;
+        font-weight: normal;
+    }
+
+    td.shape-cell {
+        width: 120px;
+        padding: 12px;
+        text-align: center;
+    }
+
+    /* The swatch in the right-most column. border-radius supplies the corner
+       size, corner-shape supplies the curvature the variant is named after. */
+    .swatch {
+        width: 84px;
+        height: 84px;
+        margin: 0 auto;
+        border-radius: var(--corner-radius);
+        background: var(--swatch-color);
+    }
+
+    /* At border-radius: 50% the notches/bevels of adjacent corners meet and eat
+       the whole box, so the concave and straight variants use a smaller radius. */
+    .swatch.notch    { corner-shape: notch;    --corner-radius: 30%; --swatch-color: #b83c50; }
+    .swatch.scoop    { corner-shape: scoop;    --corner-radius: 30%; --swatch-color: #2f7d5b; }
+    .swatch.bevel    { corner-shape: bevel;    --corner-radius: 30%; --swatch-color: #8479c8; }
+    .swatch.round    { corner-shape: round;    --corner-radius: 45%; --swatch-color: #4b7fb0; }
+    .swatch.squircle { corner-shape: squircle; --corner-radius: 50%; --swatch-color: #e89a5f; }
+    .swatch.square   { corner-shape: square;   --corner-radius: 50%; --swatch-color: #717b88; }
+</style>
+</head>
+<body>
+
+<table>
+    <tr>
+        <th>Variant</th>
+        <th>Equivalent</th>
+        <th>What it draws</th>
+        <th></th>
+    </tr>
+    <tr>
+        <td>notch</td>
+        <td>superellipse(-infinity)</td>
+        <td>Two straight lines cutting a rectangle out of the corner</td>
+        <td class="shape-cell"><div class="swatch notch"></div></td>
+    </tr>
+    <tr>
+        <td>scoop</td>
+        <td>superellipse(-1)</td>
+        <td>Inverse rounded corner, curving inwards</td>
+        <td class="shape-cell"><div class="swatch scoop"></div></td>
+    </tr>
+    <tr>
+        <td>bevel</td>
+        <td>superellipse(0)</td>
+        <td>Straight line between the two radius endpoints</td>
+        <td class="shape-cell"><div class="swatch bevel"></div></td>
+    </tr>
+    <tr>
+        <td>round</td>
+        <td>superellipse(1)</td>
+        <td>rounded corner border-radius has always drawn</td>
+        <td class="shape-cell"><div class="swatch round"></div></td>
+    </tr>
+    <tr>
+        <td>squircle</td>
+        <td>superellipse(2)</td>
+        <td>Fuller than round. Resembles Apple style app icon shape</td>
+        <td class="shape-cell"><div class="swatch squircle"></div></td>
+    </tr>
+    <tr>
+        <td>square</td>
+        <td>superellipse(infinity)</td>
+        <td>Straight out to the corner vertex</td>
+        <td class="shape-cell"><div class="swatch square"></div></td>
+    </tr>
+</table>
+
+</body>
+</html>
