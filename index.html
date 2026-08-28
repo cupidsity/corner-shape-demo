@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>corner-shape demos</title>
+<style>
+    :root {
+        color-scheme: dark;
+        --page-background: #1b1b1b;
+        --text: #e8e8e8;
+        --text-dim: #a0a0a0;
+        --grid-line: #6d6d6d;
+        --card-background: #242424;
+    }
+
+    body {
+        margin: 0;
+        padding: 40px;
+        background: var(--page-background);
+        color: var(--text);
+        font: 17px/1.4 -apple-system, "Helvetica Neue", sans-serif;
+    }
+
+    h1 {
+        margin: 0 0 8px;
+        font-size: 28px;
+        font-weight: 600;
+    }
+
+    p.intro {
+        margin: 0 0 32px;
+        max-width: 46em;
+        color: var(--text-dim);
+    }
+
+    ul.demo-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: 16px;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        max-width: 1000px;
+    }
+
+    a.demo-card {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+        padding: 18px;
+        border: 1px solid var(--grid-line);
+        border-radius: 18px;
+        corner-shape: squircle;
+        background: var(--card-background);
+        color: inherit;
+        text-decoration: none;
+    }
+
+    a.demo-card:hover {
+        border-color: var(--text);
+    }
+
+    /* Each card carries a swatch drawn with the corner-shape its demo shows off. */
+    .swatch {
+        flex: none;
+        width: 56px;
+        height: 56px;
+        border-radius: var(--corner-radius);
+        background: var(--swatch-color);
+    }
+
+    .swatch.squircle { corner-shape: squircle; --corner-radius: 50%; --swatch-color: #e89a5f; }
+    .swatch.scoop    { corner-shape: scoop;    --corner-radius: 30%; --swatch-color: #2f7d5b; }
+    .swatch.bevel    { corner-shape: bevel;    --corner-radius: 30%; --swatch-color: #8479c8; }
+
+    .demo-name {
+        font-size: 19px;
+    }
+
+    .demo-blurb {
+        margin-top: 4px;
+        font-size: 15px;
+        color: var(--text-dim);
+    }
+
+    /* Browsers without corner-shape still get the page, just with plain rounded
+       corners, so say so rather than letting the demos look broken. */
+    .support-note {
+        margin-top: 36px;
+        font-size: 15px;
+        color: var(--text-dim);
+    }
+
+    @supports (corner-shape: squircle) {
+        .support-note { display: none; }
+    }
+</style>
+</head>
+<body>
+
+<h1>corner-shape demos</h1>
+<p class="intro">
+    A few pages exploring the CSS <code>corner-shape</code> property, which decides
+    the curvature <code>border-radius</code> draws with — notch, scoop, bevel,
+    round, squircle or square.
+</p>
+
+<ul class="demo-list">
+    <li>
+        <a class="demo-card" href="corner-shape-table.html">
+            <div class="swatch bevel"></div>
+            <div>
+                <div class="demo-name">Variants table</div>
+                <div class="demo-blurb">Every keyword, its superellipse equivalent, and a swatch</div>
+            </div>
+        </a>
+    </li>
+    <li>
+        <a class="demo-card" href="corner-shape-demo.html">
+            <div class="swatch squircle"></div>
+            <div>
+                <div class="demo-name">Interactive demo</div>
+                <div class="demo-blurb">Play with corner-shape and border-radius values</div>
+            </div>
+        </a>
+    </li>
+    <li>
+        <a class="demo-card" href="corner-shape-store.html">
+            <div class="swatch scoop"></div>
+            <div>
+                <div class="demo-name">Demo retail page</div>
+                <div class="demo-blurb">A storefront mockup built out of corner-shape</div>
+            </div>
+        </a>
+    </li>
+</ul>
+
+<p class="support-note">
+    Your browser doesn't support <code>corner-shape</code> yet, so these pages will
+    fall back to ordinary rounded corners. Try a recent Chrome or Edge.
+</p>
+
+</body>
+</html>
